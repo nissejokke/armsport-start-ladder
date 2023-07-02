@@ -1,0 +1,16 @@
+{
+  "name": "armbrytning-stege",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib.js",
+  "scripts": {
+    "build": "bun build src/*.ts --outdir dist && cp src/index.html dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "bun": "^0.6.12",
+    "serve": "^14.2.0"
+  }
+}
