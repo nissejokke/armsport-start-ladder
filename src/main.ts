@@ -11,6 +11,10 @@ export interface Match {
 export interface InitTableArgs {
 }
 
+const emptyPlayer: Player = {
+    name: ''
+};
+
 export function initTable(args: InitTableArgs) {
 
     const table = document.querySelector('.table')!;
@@ -58,6 +62,7 @@ export function initTable(args: InitTableArgs) {
 
         
     ];
+    matches = [matches[0], matches[5], ...matches];
     // matches = [...matches, ...matches, matches[0]];
     // matches = [...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches];
     matches.push(
@@ -79,13 +84,15 @@ export function initTable(args: InitTableArgs) {
     }
 
     function calcStartDepth() {
-        let v = matches.length + 1;
-        let m = 0;
+        let v = matches.length;
+        let m = 1;
         while (v / 2 >= 1) {
             v /= 2;
             m++;
         }
-        return m + 1;
+        if (v !== 1)
+            m++;
+        return m;
     }
 
     let matchesPerCol = 1;
@@ -93,9 +100,12 @@ export function initTable(args: InitTableArgs) {
     const startDepth = calcStartDepth();
     for (let depth = startDepth; depth > 0; depth--) {
         currentMatchIndex -= matchesPerCol;
-        // if (currentMatchIndex < 0) break;
-        const matchSelection = takeMatches(matches, currentMatchIndex, currentMatchIndex + matchesPerCol);
-        if (matchSelection.length !== matchesPerCol) throw new Error(`Only ${matchSelection.length} matches, expected ${matchesPerCol}, currentMatchIndex=${currentMatchIndex}`);
+        const matchSelection = takeMatches(matches, Math.max(currentMatchIndex, 0), currentMatchIndex + matchesPerCol);
+        while (matchSelection.length !== matchesPerCol) {
+            matchSelection.push({
+                players: [emptyPlayer, emptyPlayer]
+            });
+        }
         // 1, 1, 2, 4
         // 7, 6, 4-5, 0-3, 
         renderMatches(matchSelection, depth);
@@ -107,14 +117,19 @@ export function initTable(args: InitTableArgs) {
     table.setAttribute('style', `grid-template-columns: repeat(${startDepth}, 1fr)`);
 }
 
-function renderColsAsSingleTable(cols: HTMLElement[][]) {
+function renderColsAsSingleTable(columns: HTMLElement[][]) {
     const table = document.querySelector('.table')!;
-    const colCount = cols.length;
-    for (let r = 0; r < cols[0].length; r++) {
-        for (let c = 0; c < colCount; c++) {
-            const cell = cols[c][r];
+    const colCount = columns.length;
+    for (let row = 0; row < columns[0].length; row++) {
+        for (let col = 0; col < colCount; col++) {
+            // let cellToTheTopLeft: HTMLElement | undefined;
+            // if (col - 1 >= 0 && row - 1 >= 0)
+            //     cellToTheTopLeft = columns[col - 1][row - 1];
+            const cell = columns[col][row];
             if (!cell.innerText)
                 cell.innerHTML = '&nbsp;';
+            // if (cellToTheTopLeft && !cellToTheTopLeft.classList.contains('empty'))
+            //     cell.classList.add('left-border');
             table.appendChild(cell);
         }
     }
@@ -133,14 +148,16 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
     // spaces with left border
     // spaces
     // repeat
-    function generateItem({text, leftBorder, bottomBorder}: {text?: string, leftBorder?: boolean, bottomBorder?: boolean}): HTMLElement {
+    function generateItem({text, leftBorder, bottomBorder, isEmptyPlayer}: {text?: string, leftBorder?: boolean, bottomBorder?: boolean, isEmptyPlayer?: boolean}): HTMLElement {
         const div = document.createElement('div');
         if (text)
             div.textContent = text;
         if (bottomBorder)
-            div.classList.add('bbottom');
+            div.classList.add('border-bottom');
+        if (isEmptyPlayer)
+            div.classList.add('empty');
         if (leftBorder)
-            div.classList.add('bleft');
+            div.classList.add('border-left');
         return div;
     }
 
@@ -160,7 +177,7 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
         if (depth === 1)
             spaces = 0;
         else
-            spaces = 2**(depth - 2);
+            spaces = 2 ** (depth - 2);
 
         for (let i = 0; i < spaces; i++)
             col.push(generateItem({}));
@@ -171,7 +188,7 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
             col.push(generateItem({ leftBorder: true }));
 
         // text
-        col.push(generateItem({ leftBorder: depth > 1, bottomBorder: true, text: player?.name }));
+        col.push(generateItem({ isEmptyPlayer: player === emptyPlayer, leftBorder: depth > 1, bottomBorder: player !== emptyPlayer, text: player.name }));
 
         // spaces with left border
         for (let i = 0; i < spaces2 + 1; i++)
