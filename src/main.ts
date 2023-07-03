@@ -3,16 +3,24 @@ export interface Player {
 }
 
 export interface Match {
-    parents?: [Match, Match];
+    parent?: Match;
+    // chil
     players?: [Player, Player];
     winner?: Player;
+    depth?: number;
 }
 
 export interface InitTableArgs {
 }
 
 const emptyPlayer: Player = {
-    name: ''
+    name: '-'
+};
+const unknownPlayer: Player = {
+    name: '?'
+};
+const pendingMatch: Match = {
+    players: [unknownPlayer, unknownPlayer]
 };
 
 export function initTable(args: InitTableArgs) {
@@ -30,47 +38,100 @@ export function initTable(args: InitTableArgs) {
         'Dagblad'
     ];
     const players: Player[] = names.map(name => ({ name }));
-    let matches: Match[] = [
-        {
-            players: [players[0], players[1]],            
-        },
-        {
-            players: [players[2], players[3]],            
-        },
-        {
-            players: [players[4], players[5]],            
-        },
-        {
-            players: [players[6], players[7]],            
-        },
+    const startDepth = calcStartDepth();
 
-        // semi
-        {
-            // kent, cronblad
-            players: [players[0], players[3]],            
-        },
-        {
-            // alex, viktor
-            players: [players[4], players[6]],            
-        },
+    let matches: Match[] = [];
+    const shuffledPlayers = shuffle(players);
 
-        // final
-        {
-            // kent, viktor
-            players: [players[0], players[6]],
-        },
+    const matchQueue: Match[] = [];
+    matchQueue.push({
+        players: [unknownPlayer, unknownPlayer],
+        depth: startDepth - 1
+    });
+    while (matchQueue.length) {
+        const match = matchQueue.shift()!;
+        if (match.depth! < 1) break;
+        matches.push(match);
+
+        for (let i = 0; i < 2; i++) {
+            let playersSelection: [Player, Player];
+            if (match.depth === 2) {
+                playersSelection = [shuffledPlayers.pop() ?? emptyPlayer, shuffledPlayers.pop() ?? emptyPlayer]; 
+                console.log(playersSelection.map(p => p.name));
+            } else
+                playersSelection = [unknownPlayer, unknownPlayer];
+            const childMatch = genChildMatch(match, playersSelection, match.depth! - 1);
+            matchQueue.push(childMatch);
+        }
+    }
+
+    matches.reverse();
+    matches.push({
+        winner: unknownPlayer,
+        parent: matches[matches.length - 1],
+    });
+
+    function genChildMatch(parent: Match | undefined, players: [Player, Player], depth: number) {
+        const match: Match = {
+            parent: parent,
+            players: [players[0], players[1]],
+            depth
+        };
+        return match;
+    }
+    // let depth = startDepth;
+    // for (let i = 0; i < startDepth; i++)
+    //     matches.push({
+    //         players: [shuffledPlayers[i], shuffledPlayers[i + 1]]
+    //     });
+    // depth = startDepth / 2;
+    // for (let i = 0; i < depth; i++)
+    //     matches.push(pendingMatch);
+    //     depth = startDepth / 2;
+    //     for (let i = 0; i < depth; i++)
+    //         matches.push(pendingMatch);
+
+    // let matches: Match[] = [
+    //     {
+    //         players: [players[0], players[1]],            
+    //     },
+    //     {
+    //         players: [players[2], players[3]],            
+    //     },
+    //     {
+    //         players: [players[4], players[5]],            
+    //     },
+    //     {
+    //         players: [players[6], players[7]],            
+    //     },
+
+    //     // semi
+    //     {
+    //         // kent, cronblad
+    //         players: [players[0], players[3]],            
+    //     },
+    //     {
+    //         // alex, viktor
+    //         players: [players[4], players[6]],            
+    //     },
+
+    //     // final
+    //     {
+    //         // kent, viktor
+    //         players: [players[0], players[6]],
+    //     },
 
         
-    ];
-    matches = [matches[0], matches[5], ...matches];
-    // matches = [...matches, ...matches, matches[0]];
-    // matches = [...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches];
-    matches.push(
-        // winner
-        {
-            winner: players[0],
-        }
-    );
+    // ];
+    // matches = [matches[0], matches[5], ...matches];
+    // // matches = [...matches, ...matches, matches[0]];
+    // // matches = [...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches];
+    // matches.push(
+    //     // winner
+    //     {
+    //         winner: players[0],
+    //     }
+    // );
 
     const ladder: HTMLElement[][] = [];
 
@@ -84,7 +145,7 @@ export function initTable(args: InitTableArgs) {
     }
 
     function calcStartDepth() {
-        let v = matches.length;
+        let v = players.length; //matches.length;
         let m = 1;
         while (v / 2 >= 1) {
             v /= 2;
@@ -97,7 +158,6 @@ export function initTable(args: InitTableArgs) {
 
     let matchesPerCol = 1;
     let currentMatchIndex = matches.length;
-    const startDepth = calcStartDepth();
     for (let depth = startDepth; depth > 0; depth--) {
         currentMatchIndex -= matchesPerCol;
         const matchSelection = takeMatches(matches, Math.max(currentMatchIndex, 0), currentMatchIndex + matchesPerCol);
@@ -206,3 +266,21 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
 
     return col;
 }
+
+function shuffle<T>(array: T[]): T[] {
+    let currentIndex = array.length,  randomIndex;
+  
+    // While there remain elements to shuffle.
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  
+    return array;
+  }
