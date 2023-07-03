@@ -5,7 +5,7 @@
         <style>
             .table {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(4, 1fr);
                 gap: 0px;
                 grid-auto-rows: minmax(25px, auto);
             }
@@ -33,25 +33,12 @@
         </style>
     </head>
     <body>
-        <script src="./src/dist/table-node.js" type="module"></script>
         <script src="./src/dist/main.js" type="module"></script>
         <script type="module">
             import { initTable } from './src/dist/main.js';
 
-            initTable({
-                
-            });
+            initTable({});
         </script>
-        <!--<div class="table">
-            <div class="bbottom">Kent Andersson</div>
-            <div></div>
-            <div></div>
-            <div class="bbottom bleft">Kent Andersson</div>
-            <div class="bbottom">Totte</div>
-            <div class="bleft"></div>
-            <div></div>
-            <div></div>
-        </div>-->
         <div class="table">
             <!-- <div class="col">
                 <div class="bbottom">Kent Andersson</div>

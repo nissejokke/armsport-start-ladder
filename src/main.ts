@@ -1,5 +1,3 @@
-import { TableNode } from './dist/table-node.js';
-
 export interface Player {
     name: string;
 }
@@ -11,8 +9,6 @@ export interface Match {
 }
 
 export interface InitTableArgs {
-    // players: Player;
-    final?: Match;
 }
 
 export function initTable(args: InitTableArgs) {
@@ -66,12 +62,20 @@ export function initTable(args: InitTableArgs) {
             players: [players[0], players[6]],
             winner: players[0]
         },
+
+        // winner
+        {
+            winner: players[0],
+        }
     ];
 
     // matches[6].parents = [matches[]
 
     const currentMatchIndex = 6;
     const currentMatch = matches[currentMatchIndex];
+
+    const winnerCol = generateCols([matches[7]], 4);
+
 
     const col1 = generateCols([currentMatch], 3);
     console.log(col1);
@@ -87,7 +91,7 @@ export function initTable(args: InitTableArgs) {
     const col3 = generateCols(parentMatches2, 1);
     console.log(col3);
 
-    renderCols([col3, col2, col1]);
+    renderCols([col3, col2, col1, winnerCol]);
 
     // const final: Match = {
     //     matches: [{
@@ -136,14 +140,22 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
     }
 
     function drawMatch(match: Match) {
-        for (const player of match.players!)
+        if (match.players) {
+            for (const player of match.players!)
             drawPlayer(player);
+        }
+        else if (match.winner) {
+            drawPlayer(match.winner);
+        }
+        else throw new Error('Match has not players or winners')
     }
 
     function drawPlayer(player: Player) {
         // spaces
         let spaces;
-        if (depth === 3)
+        if (depth === 4)
+            spaces = 4;
+        else if (depth === 3)
             spaces = 2;
         else if (depth === 2)
             spaces = 1;
@@ -154,6 +166,8 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
 
         // spaces with left border
         let spaces2;
+        if (depth === 4)
+            spaces2 = 3;
         if (depth === 3)
             spaces2 = 1;
         else if (depth === 2)
