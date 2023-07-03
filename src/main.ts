@@ -26,100 +26,105 @@ export function initTable(args: InitTableArgs) {
         'Dagblad'
     ];
     const players: Player[] = names.map(name => ({ name }));
-    const matches: Match[] = [
+    let matches: Match[] = [
         {
             players: [players[0], players[1]],            
-            winner: players[0]
         },
         {
             players: [players[2], players[3]],            
-            winner: players[3]
         },
         {
             players: [players[4], players[5]],            
-            winner: players[4]
         },
         {
             players: [players[6], players[7]],            
-            winner: players[6]
         },
 
         // semi
         {
             // kent, cronblad
             players: [players[0], players[3]],            
-            winner: players[0]
         },
         {
             // alex, viktor
             players: [players[4], players[6]],            
-            winner: players[6]
         },
 
         // final
         {
             // kent, viktor
             players: [players[0], players[6]],
-            winner: players[0]
         },
 
+        
+    ];
+    // matches = [...matches, ...matches, matches[0]];
+    // matches = [...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches, ...matches];
+    matches.push(
         // winner
         {
             winner: players[0],
         }
-    ];
+    );
 
-    // matches[6].parents = [matches[]
+    const ladder: HTMLElement[][] = [];
 
-    const currentMatchIndex = 6;
-    const currentMatch = matches[currentMatchIndex];
-
-    const winnerCol = generateCols([matches[7]], 4);
-
-
-    const col1 = generateCols([currentMatch], 3);
-    console.log(col1);
-    
-    
-    console.log('-----')
-    const parentMatches = [matches[currentMatchIndex - 2], matches[currentMatchIndex - 1]];
-    const col2 = generateCols(parentMatches, 2);
-    console.log(col2);
-
-    console.log('-----')
-    const parentMatches2 = [matches[0], matches[1], matches[2], matches[3]];
-    const col3 = generateCols(parentMatches2, 1);
-    console.log(col3);
-
-    renderCols([col3, col2, col1, winnerCol]);
-
-    // const final: Match = {
-    //     matches: [{
-    //         players: [players[0], players[1]],            
-    //     }]
-    //     winner: kent,
-    // }
-
-}
-
-function renderCols(cols: HTMLElement[][]) {
-    const table = document.querySelector('.table')!;
-    for (const col of cols) {
-        const colContainer = document.createElement('div');
-        colContainer.classList.add('col');
-        for (const row of col) {
-            if (!row.innerText)
-                row.innerHTML = '&nbsp;';
-            colContainer.appendChild(row);
-        }
-        table.appendChild(colContainer);
+    function renderMatches(matches: Match[], depth: number) {
+        const cols = generateCols(matches, depth);
+        ladder.unshift(cols);
     }
 
+    function takeMatches(matches: Match[], start: number, end: number): Match[] {
+        return matches.slice(start, end);
+    }
+
+    function calcStartDepth() {
+        let v = matches.length + 1;
+        let m = 0;
+        while (v / 2 >= 1) {
+            v /= 2;
+            m++;
+        }
+        return m + 1;
+    }
+
+    let matchesPerCol = 1;
+    let currentMatchIndex = matches.length;
+    const startDepth = calcStartDepth();
+    for (let depth = startDepth; depth > 0; depth--) {
+        currentMatchIndex -= matchesPerCol;
+        // if (currentMatchIndex < 0) break;
+        const matchSelection = takeMatches(matches, currentMatchIndex, currentMatchIndex + matchesPerCol);
+        if (matchSelection.length !== matchesPerCol) throw new Error(`Only ${matchSelection.length} matches, expected ${matchesPerCol}, currentMatchIndex=${currentMatchIndex}`);
+        // 1, 1, 2, 4
+        // 7, 6, 4-5, 0-3, 
+        renderMatches(matchSelection, depth);
+        if (depth < startDepth)
+            matchesPerCol *= 2;
+    }
+
+    renderColsAsSingleTable(ladder);
+    table.setAttribute('style', `grid-template-columns: repeat(${startDepth}, 1fr)`);
+}
+
+function renderColsAsSingleTable(cols: HTMLElement[][]) {
+    const table = document.querySelector('.table')!;
+    const colCount = cols.length;
+    for (let r = 0; r < cols[0].length; r++) {
+        for (let c = 0; c < colCount; c++) {
+            const cell = cols[c][r];
+            if (!cell.innerText)
+                cell.innerHTML = '&nbsp;';
+            table.appendChild(cell);
+        }
+    }
 }
 
 function generateCols(matches: Match[], depth: number): HTMLElement[] {
 
     const col: HTMLElement[] = [];
+
+    if (depth < 1) throw new Error(`Invalid depth ${depth}, must be >= 1`);
 
     // gen order:
     // spaces
@@ -140,12 +145,11 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
     }
 
     function drawMatch(match: Match) {
-        if (match.players) {
-            for (const player of match.players!)
-            drawPlayer(player);
-        }
-        else if (match.winner) {
+        if (match.winner)
             drawPlayer(match.winner);
+        else if (match.players) {
+            for (const player of match.players!)
+                drawPlayer(player);
         }
         else throw new Error('Match has not players or winners')
     }
@@ -153,27 +157,16 @@ function generateCols(matches: Match[], depth: number): HTMLElement[] {
     function drawPlayer(player: Player) {
         // spaces
         let spaces;
-        if (depth === 4)
-            spaces = 4;
-        else if (depth === 3)
-            spaces = 2;
-        else if (depth === 2)
-            spaces = 1;
-        else if (depth === 1)
+        if (depth === 1)
             spaces = 0;
+        else
+            spaces = 2**(depth - 2);
+
         for (let i = 0; i < spaces; i++)
             col.push(generateItem({}));
 
         // spaces with left border
-        let spaces2;
-        if (depth === 4)
-            spaces2 = 3;
-        if (depth === 3)
-            spaces2 = 1;
-        else if (depth === 2)
-            spaces2 = 0;
-        else if (depth === 1)
-            spaces2 = -1;
+        let spaces2 = spaces - 1;
         for (let i = 0; i < spaces2; i++)
             col.push(generateItem({ leftBorder: true }));
 
