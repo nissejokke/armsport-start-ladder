@@ -8,6 +8,7 @@ export interface Match {
     players?: [Player, Player];
     winner?: Player;
     depth?: number;
+    isWinnerMatch?: boolean;
 }
 
 export interface InitTableArgs {
@@ -39,40 +40,8 @@ export function initTable(args: InitTableArgs) {
     const startDepth = calcStartDepth();
 
     let matches: Match[] = [];
-    const shuffledPlayers = shuffle(players);
-
-    const matchQueue: Match[] = [];
-    // final
-    matchQueue.push({
-        players: [unknownPlayer, unknownPlayer],
-        depth: startDepth - 1
-    });
-
-    while (matchQueue.length) {
-        const match = matchQueue.shift()!;
-        if (match.depth! < 1) break;
-        matches.unshift(match);
-
-        for (let childIndex = 0; childIndex < 2; childIndex++) {
-            let playersSelection: [Player, Player];
-            if (match.depth === 2) {
-                playersSelection = [shuffledPlayers.pop() ?? emptyPlayer, shuffledPlayers.pop() ?? emptyPlayer]; 
-                console.log(playersSelection.map(p => p.name));
-            } else
-                playersSelection = [unknownPlayer, unknownPlayer];
-            const childMatch = genChildMatch(match, playersSelection, match.depth! - 1, childIndex);
-            matchQueue.push(childMatch);
-            console.log(childMatch.players?.map(p => p.name))
-        }
-    }
-
-    // matches.reverse();
-    matches.push({
-        winner: unknownPlayer,
-        parent: matches[matches.length - 1],
-    });
-
-    console.log(matches.map(m => m.players?.map(p => p.name).join(' - ')))
+    let matchPerDepth: Match[][] = [];
+    const shuffledPlayers = [...players]; //shuffle(players);
 
     function genChildMatch(parent: Match | undefined, players: [Player, Player], depth: number, childIndex: number) {
         const match: Match = {
@@ -84,6 +53,44 @@ export function initTable(args: InitTableArgs) {
         parent!.children[childIndex] = match;
         return match;
     }
+
+    const matchQueue: Match[] = [];
+    // final
+    matchQueue.push({
+        players: [unknownPlayer, unknownPlayer],
+        depth: startDepth - 1
+    });
+
+    while (matchQueue.length) {
+        const match = matchQueue.shift()!;
+        if (match.depth! < 1) break;
+        matchPerDepth[match.depth!] = matchPerDepth[match.depth!] ?? [];
+        matchPerDepth[match.depth!].push(match);
+
+        for (let childIndex = 0; childIndex < 2; childIndex++) {
+            let playersSelection: [Player, Player];
+            if (match.depth === 2) {
+                playersSelection = [shuffledPlayers.shift() ?? emptyPlayer, shuffledPlayers.shift() ?? emptyPlayer]; 
+                console.log(playersSelection.map(p => p.name));
+            } else
+                playersSelection = [unknownPlayer, unknownPlayer];
+            const childMatch = genChildMatch(match, playersSelection, match.depth! - 1, childIndex);
+            matchQueue.push(childMatch);
+            console.log(childMatch.players?.map(p => p.name))
+        }
+    }
+
+    matches = matchPerDepth.flat();
+
+    // winner match (special case)
+    const winnerMatch: Match = {
+        winner: unknownPlayer,
+        parent: undefined,
+        isWinnerMatch: true,
+    };
+    matches[matches.length - 1].parent = winnerMatch;
+    matches.push(winnerMatch);
+    
     // let depth = startDepth;
     // for (let i = 0; i < startDepth; i++)
     //     matches.push({
@@ -141,7 +148,7 @@ export function initTable(args: InitTableArgs) {
 
 
     function calcStartDepth() {
-        let v = players.length; //matches.length;
+        let v = players.length;
         let m = 1;
         while (v / 2 >= 1) {
             v /= 2;
@@ -216,7 +223,7 @@ function generateCols(matches: Match[], depth: number, opts: { allMatches: Match
 
     if (depth < 1) throw new Error(`Invalid depth ${depth}, must be >= 1`);
 
-    // gen order:
+    // generates elements this order:
     // spaces
     // spaces with left border
     // player
@@ -241,24 +248,33 @@ function generateCols(matches: Match[], depth: number, opts: { allMatches: Match
         canWin?: boolean
     }): HTMLElement {
         const div = document.createElement('div');
-        if (text)
-            div.textContent = text;
         if (canWin) {
+            if (!player) throw new Error('player is required when canWin=true');
+            const label = document.createElement('label');
+            label.innerText = text ?? '';
             const checkbox = document.createElement('input');
+            label.prepend(checkbox);
             checkbox.type = 'checkbox';
+            if (match?.parent?.players?.includes(player))
+                checkbox.checked = true;
             checkbox.onclick = () => {
                 if (!match) throw new Error('match is required');
-                const childMatchIndex = match!.parent!.children!.findIndex(child => child === match);
-                console.log('child match index', childMatchIndex)
-                if (childMatchIndex === -1) throw new Error('Couldnt find child');
-                const firstChild = player === match!.parent!.children![childMatchIndex].players![0];
-                const secondChild = player === match!.parent!.children![childMatchIndex].players![1];
-                if (!firstChild && !secondChild) throw new Error('Neither first or second child');
-                match!.parent!.players![firstChild ? 0 : 1] = player;
+                if (!match.parent) throw new Error('match parent undefined');
+                resetWinnersForParentMatches(match);
+                if (match.parent.children) {
+                    const childMatchIndex = match.parent.children!.findIndex(child => child === match);
+                    console.log('child match index', childMatchIndex)
+                    if (childMatchIndex === -1) throw new Error('Couldnt find child');
+                    match.parent.players![childMatchIndex] = player!;
+                }
+                else
+                    match.parent.winner = player;
                 renderLadder(opts.allMatches, opts.startDepth);
             };
-            div.appendChild(checkbox);
+            div.appendChild(label);
         }
+        else if (text)
+            div.textContent = text;
         if (bottomBorder)
             div.classList.add('border-bottom');
         if (isEmptyPlayer)
@@ -299,7 +315,7 @@ function generateCols(matches: Match[], depth: number, opts: { allMatches: Match
             player,
             match,
             isEmptyPlayer: player === emptyPlayer, 
-            canWin: player !== emptyPlayer && player !== unknownPlayer,
+            canWin: !match.isWinnerMatch && player !== emptyPlayer && player !== unknownPlayer,
             leftBorder: depth > 1, 
             bottomBorder: player !== emptyPlayer, 
             text: player.name 
@@ -309,6 +325,7 @@ function generateCols(matches: Match[], depth: number, opts: { allMatches: Match
         for (let i = 0; i < spaces2 + 1; i++)
             col.push(generateItem({ leftBorder: true }));
 
+        // spaces
         for (let i = 0; i < spaces; i++)
             col.push(generateItem({}));
 
@@ -320,6 +337,19 @@ function generateCols(matches: Match[], depth: number, opts: { allMatches: Match
         drawMatch(match);
 
     return col;
+}
+
+function resetWinnersForParentMatches(match: Match) {
+    let iterMatch = match;
+    while (iterMatch.parent && !iterMatch.parent.isWinnerMatch) {
+        let parent = iterMatch.parent;
+        const matchIndex = parent.children!.findIndex(child => child === iterMatch);
+        parent.players![matchIndex] = unknownPlayer;
+        iterMatch = parent;
+    }
+    if (iterMatch?.parent?.isWinnerMatch) {
+        iterMatch.parent.winner = unknownPlayer;
+    }
 }
 
 function shuffle<T>(array: T[]): T[] {
