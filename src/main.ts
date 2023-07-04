@@ -11,7 +11,7 @@ export interface Match {
     isWinnerMatch?: boolean;
 }
 
-export interface InitTableArgs {
+export interface InitLadderArgs {
 }
 
 const emptyPlayer: Player = {
@@ -24,7 +24,7 @@ const pendingMatch: Match = {
     players: [unknownPlayer, unknownPlayer]
 };
 
-export function initTable(args: InitTableArgs) {
+export function initLadder(args: InitLadderArgs) {
 
     const names = [
         'Kent Andersson',
@@ -34,13 +34,13 @@ export function initTable(args: InitTableArgs) {
         'Alex',
         'Strumpan',
         'Viktor',
-        'Dagblad'
+        'Dagblad',
+        'Klubban'
     ];
     const players: Player[] = names.map(name => ({ name }));
     const startDepth = calcStartDepth();
 
-    let matches: Match[] = [];
-    let matchPerDepth: Match[][] = [];
+    const matchPerDepth: Match[][] = [];
     const shuffledPlayers = [...players]; //shuffle(players);
 
     function genChildMatch(parent: Match | undefined, players: [Player, Player], depth: number, childIndex: number) {
@@ -80,7 +80,7 @@ export function initTable(args: InitTableArgs) {
         }
     }
 
-    matches = matchPerDepth.flat();
+    const matches = matchPerDepth.flat();
 
     // winner match (special case)
     const winnerMatch: Match = {
