@@ -139,6 +139,7 @@ Deno.test("eight players", async () => {
     // Viktoria   0 2 2
 
     assertEquals(results[results.length - 1].winner.name, players[1].name);
+    assertEquals(players.filter(p => p.losses.length < 2), [players[1]]);
     // assertEquals(playerStats(players), [{
     //         wins: 2,
     //         losses: 2,

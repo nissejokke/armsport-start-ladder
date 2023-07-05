@@ -14,24 +14,24 @@ export async function initLadder(args: InitLadderArgs) {
     canvas.width = window.outerWidth;
     canvas.height = window.outerHeight;
     ctx = canvas.getContext('2d')!;
-    // const names = [
-    //     'Kent Andersson',
-    //     'Totte',
-    //     'Palten',
-    //     'Cronblad',
-    //     'Alex',
-    //     'Strumpan',
-    //     'Viktor',
-    //     'Dagblad',
-    //     'Klubban'
-    // ];
+   
     const players: TestPlayer[] = [
-        { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 },
-        { name: 'Cronblad', strength: 5, wins: [], losses: [], rest: 0 },
         { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
-        { name: 'Jonna', strength: 1, wins: [], losses: [], rest: 0 },
+        { name: 'Totte', strength: 8, wins: [], losses: [], rest: 0 },
+        { name: 'Jonna', strength: 1.5, wins: [], losses: [], rest: 0 },
+        { name: 'Cronblad', strength: 6, wins: [], losses: [], rest: 0 },
+        { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 },
+        { name: 'Palten', strength: 5, wins: [], losses: [], rest: 0 },
         { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
+        { name: 'Hilda', strength: 1, wins: [], losses: [], rest: 0 },
     ];
+    // const players: TestPlayer[] = [
+    //     { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 },
+    //     { name: 'Cronblad', strength: 5, wins: [], losses: [], rest: 0 },
+    //     { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
+    //     { name: 'Jonna', strength: 1, wins: [], losses: [], rest: 0 },
+    //     { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
+    // ];
 
     // const players: TestPlayer[] = [
     //     { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
@@ -62,7 +62,7 @@ export async function initLadder(args: InitLadderArgs) {
         result = await play(players, chooseWinner as (p1: Player, p2: Player) => Promise<Player>);
         drawMatchResults(result);
         results.push(result);
-    } while (!result.finished);
+    } while  (!result.finished); //(players.some(p => p.wins.length + p.losses.length === 0)); //
 
     const root = buildTree(results.reverse());
     drawTree(root);
@@ -91,7 +91,7 @@ function buildTree(results: MatchResult[]) {
 
 function drawTree(node: TreeNode<MatchResult>) {
     const x = 500;
-    const y = 20;
+    const y = 220;
     drawTreeInternal(node, 0, y, x);
 }
 
