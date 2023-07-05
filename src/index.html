@@ -3,30 +3,13 @@
     <head>
         <title>Armsport start ladder</title>
         <style>
-            .table {
-                display: grid;
-                gap: 0px;
-                grid-auto-rows: minmax(25px, auto);
+            .node {
+                position: absolute;
             }
 
-            .table div {
-                align-content: center;
-                text-align: left;
-                padding-left: 20px;
+            #canvas {
+                position: absolute;
             }
-
-            .table input[type="checkbox"] {
-                margin-right:7px;
-            }
-
-            .border-bottom {
-                border-bottom: 1px solid #000;
-            }
-            
-            .border-left {
-                border-left: 1px solid #000;
-            }
-
         </style>
     </head>
     <body>
@@ -36,7 +19,8 @@
 
             initLadder({});
         </script>
-        <div class="table">
+        <div id="ladder">
+            <canvas id="canvas" width="1000" height="1000"></canvas>
         </div>
     </body>
 </html>
