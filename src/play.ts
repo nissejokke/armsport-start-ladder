@@ -177,5 +177,18 @@ export function playerStats(players: Player[]): PlayerStats[] {
             losses: player.losses.length,
             matches: player.wins.length + player.losses.length,
         }
-    })
+    });
+}
+
+export function writePlayerStats(players: Player[]): void {
+    const nameMaxLength = Math.max(...players.map(p => p.name.length));
+    console.log(''.padEnd(nameMaxLength, ' '), ' w', ' l', ' #');
+    for (const player of players) {
+        console.log(
+            player.name.padEnd(nameMaxLength, ' '), 
+            player.wins.length.toString().padStart(2, ' '), 
+            player.losses.length.toString().padStart(2, ' '), 
+            (player.wins.length + player.losses.length).toString().padStart(2, ' ')
+        );
+    }
 }

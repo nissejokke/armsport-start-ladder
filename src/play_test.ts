@@ -1,5 +1,5 @@
 import { assertEquals, assertStrictEquals } from "https://deno.land/std@0.192.0/testing/asserts.ts";
-import { MatchResult, Player, play, playerStats } from "./play.ts";
+import { MatchResult, Player, play, playerStats, writePlayerStats } from "./play.ts";
 
 export interface TestPlayer extends Player {
     strength: number;
@@ -83,9 +83,7 @@ Deno.test("five players", async () => {
     } while (!result.finished);
     console.log(results.length - 1);
 
-    for (const player of players) {
-        console.log(player.name.padEnd(10, ' '), player.wins.length, player.losses.length, player.wins.length + player.losses.length);
-    }
+    writePlayerStats(players);
 
     // Alexander  2 2 4
     // Cronblad   4 0 4
@@ -149,9 +147,7 @@ Deno.test("eight players", async () => {
         console.log(result.players?.[0].name, 'vs', result.players?.[1].name, '=>', result.winner?.name);
     } while (!result.finished);
 
-    for (const player of players) {
-        console.log(player.name.padEnd(10, ' '), player.wins.length, player.losses.length, player.wins.length + player.losses.length);
-    }
+    writePlayerStats(players);
 
     // Alexander  2 2 4
     // Cronblad   4 0 4

@@ -1,4 +1,4 @@
-import { MatchResult, Player, play, playersNotPlaying } from "./play";
+import { MatchResult, Player, play, playersNotPlaying, writePlayerStats } from "./play";
 import { TestPlayer } from "./play_test";
 import { TreeNode, appendTree, printTree, searchTree } from "./tree";
 
@@ -72,6 +72,8 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
     settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] });
 
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[2] });
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[0] });
@@ -79,6 +81,8 @@ export async function initLadder(args: InitLadderArgs) {
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[5] });
     // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[6] });
     await playBuildAndDraw(shuffledPlayers, settledMatches);
+
+    writePlayerStats(shuffledPlayers);
 }
 
 async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[]) {
@@ -205,7 +209,8 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     
     // player and winner is the same so no need to draw both except for on top level
     // if (depth === 0)
-        drawNode(node.data.winner?.name ?? '?', rootY, rootX);
+    // keeping this as it reveals issues with printing the tree
+    drawNode(node.data.winner?.name ?? '?', rootY, rootX);
 
     drawPlayer(0);
     drawPlayer(1);
@@ -221,23 +226,23 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
 
     // players Alexander Totte
     // children: Alexander - Totte (w)
+    // corrent child index: 1
 
-    const children = [...node.children].sort((a, b) => {
-        // if players in child a is in node players then sort it before child b
-        if (a.data.players?.some(p => node.data.players!.includes(p)))
-            return -1;
-        if (b.data.players?.some(p => node.data.players!.includes(p)))
-            return 1;
-        return 0;
-    });
-
-    let childIndex = 0;
-    // when only child, set childIndex manually
-    if (children.length === 1) {
-        childIndex = node.data.players!.findIndex(p => node.children[0].data.winner === p);
+    // determines if child should be placed to the left och right under parent match
+    // depends on order of node.data.players and which child won
+    const childIndices: number[] = [];
+    if (node.children.length) {
+        const childIndex = node.data.players.findIndex(p => node.children[0].data.winner === p);
+        childIndices.push(childIndex);
+    }
+    if (node.children.length > 1) {
+        const childIndex2 = node.data.players.findIndex(p => node.children[1].data.winner === p);
+        childIndices.push(childIndex2);
     }
 
-    for (const childNode of children) {
+    let i = 0;
+    for (const childNode of node.children) {
+        const childIndex = childIndices[i];
         const y = getY(depth+1);
         const x = getX(depth+1, childIndex);
         
@@ -247,7 +252,7 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
         ctx.fill();
 
         drawTreeInternal(childNode, depth + 1, offsetY, x, ctx);
-        childIndex++;
+        i++;
     }
 }
 
