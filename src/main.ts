@@ -2,18 +2,15 @@ import { MatchResult, Player, play, playersNotPlaying } from "./play";
 import { TestPlayer } from "./play_test";
 import { TreeNode, appendTree, printTree, searchTree } from "./tree";
 
+interface SettledMatch {
+    winner: Player;
+    loser: Player;
+}
 
 export interface InitLadderArgs {
 }
 
-let ctx: CanvasRenderingContext2D | undefined = undefined;
-
 export async function initLadder(args: InitLadderArgs) {
-
-    const canvas = document.getElementById('canvas')! as HTMLCanvasElement;
-    canvas.width = window.outerWidth;
-    canvas.height = window.outerHeight;
-    ctx = canvas.getContext('2d')!;
    
     const players: TestPlayer[] = [
         { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
@@ -51,34 +48,69 @@ export async function initLadder(args: InitLadderArgs) {
     // ];
     // const players: Player[] = names.map(name => ({ name, wins: [], losses: [], rest: 0 }));
  
-    const shuffledPlayers = [...players]; //shuffle(players);
-    await playBuildAndDraw(shuffledPlayers);
+    let shuffledPlayers = [...players] as Player[]; //shuffle(players);
+    const settledMatches: SettledMatch[] = [];
+    // await playBuildAndDraw(shuffledPlayers, settledMatches);
+    
+    // await new Promise(r => { setTimeout(r, 1000); });
+    shuffledPlayers = [...players].map(p => ({
+        name: p.name,
+        wins: [],
+        losses: [],
+        rest: 0
+    }));
+    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[1] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
+    await playBuildAndDraw(shuffledPlayers, settledMatches);
 }
 
-async function playBuildAndDraw(players: Player[]) {
-    async function chooseWinner(p1: TestPlayer, p2: TestPlayer): Promise<Player | undefined> {
+async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[]) {
+    const ladder = document.querySelector('#ladder')!;
+    while (ladder.childNodes.length)
+        ladder.removeChild(ladder.childNodes[0]);
+
+    let settledMatchesPool = [...settledMatches];
+    async function chooseWinner(p1: Player, p2: Player): Promise<Player | undefined> {
+        const p1Winner = settledMatchesPool.find(sm => sm.winner === p1 && sm.loser === p2);
+        if (p1Winner) {
+            settledMatchesPool = settledMatchesPool.filter(sm => sm !== p1Winner);
+            return p1;
+        }
+        const p2Winner = settledMatchesPool.find(sm => sm.winner === p2 && sm.loser === p1);
+        if (p2Winner) {
+            settledMatchesPool = settledMatchesPool.filter(sm => sm !== p2Winner);
+            return p2;
+        }
         return undefined;
-        const winner = p1.strength > p2.strength ? p1 : p2;
-        return winner;
     }
 
     const results: MatchResult[] = [];
     let result: MatchResult;
     let i = 0;
     do {
-        result = await play(players, chooseWinner as (p1: Player, p2: Player) => Promise<Player>);
+        result = await play(players, chooseWinner);
         drawMatchResults(result);
-        results.push(result);
+        if (!result.finished)
+            results.push(result);
         i++;
-    } while (playersNotPlaying(players).length);
+    } while (playersNotPlaying(players).length && !result.finished && i < 20);
 
     console.log(results);
-    let filteredResults = results.reverse().filter(r => r.players?.length);
+    let filteredResults = results.reverse(); //.filter(r => r.players?.length);
     drawTrees(filteredResults);
 }
 
 function drawTrees(results: MatchResult[]) {
-    let filteredResults = results;
+    const ladder = document.querySelector('#ladder')!;
+    const canvas = document.createElement('canvas'); //! as HTMLCanvasElement;
+    ladder.prepend(canvas);
+    canvas.width = window.outerWidth;
+    canvas.height = window.outerHeight;
+    const ctx = canvas.getContext('2d')!;
+
+    // ctx?.clearRect(0, 0, window.outerWidth, window.outerHeight);
+
+    let filteredResults = [...results];
     let allResultsUsed: MatchResult[] = [];
     let x = 500;
     let y = 220;
@@ -86,7 +118,7 @@ function drawTrees(results: MatchResult[]) {
         const { rootNode, resultsUsed } = buildTree(filteredResults);
         allResultsUsed.push(...resultsUsed);
         console.log(resultsUsed);
-        drawTree(rootNode, x, y);
+        drawTree(rootNode, x, y, ctx);
         filteredResults = filteredResults.filter(r => !allResultsUsed.includes(r));
         y += 100;
     } while (filteredResults.length);
@@ -120,11 +152,11 @@ function buildTree(results: MatchResult[]): { rootNode: TreeNode<MatchResult>, r
     return { rootNode: root, resultsUsed };
 }
 
-function drawTree(node: TreeNode<MatchResult>, x: number, y: number) {
-    drawTreeInternal(node, 0, y, x);
+function drawTree(node: TreeNode<MatchResult>, x: number, y: number, ctx: CanvasRenderingContext2D) {
+    drawTreeInternal(node, 0, y, x, ctx);
 }
 
-function drawTreeInternal(node: TreeNode<MatchResult>, depth, offsetY, offsetX) {
+function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: number, offsetX: number, ctx: CanvasRenderingContext2D) {
         
     function getX(depth, childIndex?: number) {
         const x = 30 * 1*(7-depth) + 100/depth*2;
@@ -139,10 +171,10 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth, offsetY, offsetX) 
         let y = getY(depth + 1);
         let x = getX(depth + 1, playerIndex);
 
-        ctx!.beginPath();
-        ctx!.moveTo(rootX, rootY);
-        ctx!.lineTo(x, y);
-        ctx!.fill();
+        ctx.beginPath();
+        ctx.moveTo(rootX, rootY);
+        ctx.lineTo(x, y);
+        ctx.fill();
 
         drawNode(node.data.players?.[playerIndex]?.name ?? '?', y, x);
     }
@@ -157,24 +189,33 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth, offsetY, offsetX) 
     drawPlayer(0);
     drawPlayer(1);
         
-    const winnerIndex = node.data.players?.findIndex(p => p === node.data.winner)!;
+    if (!node.data.players) throw new Error('No node players');
+
+    // players Kent, Cronblad
+    // node data winner undefined
+    // children: Jonna Cronblad, Totte Kent (both winners and players)
+
+    const children = [...node.children].sort((a, b) => {
+        // if players in child a is in node players then sort it before child b
+        if (a.data.players?.some(p => node.data.players!.includes(p)))
+            return -1;
+        if (b.data.players?.some(p => node.data.players!.includes(p)))
+            return 1;
+        return 0;
+    });
+
     let childIndex = 0;
-    for (const childNode of node.children) {
-        // makes sure sub tree is placed under winner
-        if (childNode.data.winner === node.data.winner)
-            childIndex = winnerIndex;
-        else 
-            childIndex = 1 - winnerIndex;
-        
+    for (const childNode of children) {
         const y = getY(depth+1);
         const x = getX(depth+1, childIndex);
         
-        ctx!.beginPath();
-        ctx!.moveTo(rootX, rootY);
-        ctx!.lineTo(x, y);
-        ctx!.fill();
+        ctx.beginPath();
+        ctx.moveTo(rootX, rootY);
+        ctx.lineTo(x, y);
+        ctx.fill();
 
-        drawTreeInternal(childNode, depth + 1, offsetY, x );
+        drawTreeInternal(childNode, depth + 1, offsetY, x, ctx);
+        childIndex++;
     }
 }
 
@@ -194,5 +235,5 @@ function drawMatchResults(result: MatchResult) {
 function drawMatchResult(text: string) {
     const div = document.createElement('div');
     div.innerText = text;
-    document.querySelector('#ladder')!.appendChild(div);
+    document.querySelector('#log')!.appendChild(div);
 }

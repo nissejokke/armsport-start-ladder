@@ -25,8 +25,13 @@ export async function play(
     chooseWinner: (p1: Player, p2: Player) => Promise<Player | undefined>
 ): Promise<MatchResult> {
     const p1 = pick(players);
-    if (!p1) throw new Error('No winner!?');
-    // console.log('->', p1.name)
+    if (!p1) {
+        console.log('No winner!?');
+        return {
+            finished: true,
+        }
+    }
+
     const p2 = pick(players, p1);
 
     if (!p2) {
