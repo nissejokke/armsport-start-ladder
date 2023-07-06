@@ -17,7 +17,7 @@ export async function initLadder(args: InitLadderArgs) {
         { name: 'Totte', strength: 8, wins: [], losses: [], rest: 0 },
         { name: 'Jonna', strength: 1.5, wins: [], losses: [], rest: 0 },
         { name: 'Cronblad', strength: 6, wins: [], losses: [], rest: 0 },
-        { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 },
+        { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 }, // 4
         { name: 'Palten', strength: 5, wins: [], losses: [], rest: 0 },
         { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
         { name: 'Hilda', strength: 1, wins: [], losses: [], rest: 0 },
@@ -59,8 +59,19 @@ export async function initLadder(args: InitLadderArgs) {
         losses: [],
         rest: 0
     }));
-    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[1] });
+    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
+    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[5] });
+    settledMatches.push({ winner: shuffledPlayers[6], loser: shuffledPlayers[7] });
+    settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[7] });
+    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
+    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
+
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[2] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[0] });
+    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[5] });
+    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[6] });
     await playBuildAndDraw(shuffledPlayers, settledMatches);
 }
 
@@ -68,19 +79,25 @@ async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[
     const ladder = document.querySelector('#ladder')!;
     while (ladder.childNodes.length)
         ladder.removeChild(ladder.childNodes[0]);
-
     let settledMatchesPool = [...settledMatches];
-    async function chooseWinner(p1: Player, p2: Player): Promise<Player | undefined> {
+
+    async function determineWinner(p1: Player, p2: Player): Promise<Player | undefined> {
         const p1Winner = settledMatchesPool.find(sm => sm.winner === p1 && sm.loser === p2);
         if (p1Winner) {
+            const lenBefore = settledMatchesPool.length;
             settledMatchesPool = settledMatchesPool.filter(sm => sm !== p1Winner);
+            if (lenBefore - 1 !== settledMatchesPool.length) throw new Error('Should only remove one settled match');
             return p1;
         }
         const p2Winner = settledMatchesPool.find(sm => sm.winner === p2 && sm.loser === p1);
         if (p2Winner) {
+            const lenBefore = settledMatchesPool.length;
             settledMatchesPool = settledMatchesPool.filter(sm => sm !== p2Winner);
+            if (lenBefore - 1 !== settledMatchesPool.length) throw new Error('Should only remove one settled match');
             return p2;
         }
+
+        // no winner determined for this match yet
         return undefined;
     }
 
@@ -88,7 +105,7 @@ async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[
     let result: MatchResult;
     let i = 0;
     do {
-        result = await play(players, chooseWinner);
+        result = await play(players, determineWinner);
         drawMatchResults(result);
         if (!result.finished)
             results.push(result);
@@ -96,19 +113,17 @@ async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[
     } while (playersNotPlaying(players).length && !result.finished && i < 20);
 
     console.log(results);
-    let filteredResults = results.reverse(); //.filter(r => r.players?.length);
+    let filteredResults = results.reverse();
     drawTrees(filteredResults);
 }
 
 function drawTrees(results: MatchResult[]) {
     const ladder = document.querySelector('#ladder')!;
-    const canvas = document.createElement('canvas'); //! as HTMLCanvasElement;
+    const canvas = document.createElement('canvas');
     ladder.prepend(canvas);
     canvas.width = window.outerWidth;
     canvas.height = window.outerHeight;
     const ctx = canvas.getContext('2d')!;
-
-    // ctx?.clearRect(0, 0, window.outerWidth, window.outerHeight);
 
     let filteredResults = [...results];
     let allResultsUsed: MatchResult[] = [];
@@ -120,7 +135,7 @@ function drawTrees(results: MatchResult[]) {
         console.log(resultsUsed);
         drawTree(rootNode, x, y, ctx);
         filteredResults = filteredResults.filter(r => !allResultsUsed.includes(r));
-        y += 100;
+        y += 200;
     } while (filteredResults.length);
 }
 
@@ -183,7 +198,7 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     const rootY = getY(depth);
     
     // player and winner is the same so no need to draw both except for on top level
-    if (depth === 0)
+    // if (depth === 0)
         drawNode(node.data.winner?.name ?? '?', rootY, rootX);
 
     drawPlayer(0);
@@ -205,6 +220,12 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     });
 
     let childIndex = 0;
+    // when only child, set childIndex manually
+    if (children.length === 1) {
+        if (children[0].data.players?.some(p => node.data.players!.includes(p)))
+            childIndex = 1;
+    }
+
     for (const childNode of children) {
         const y = getY(depth+1);
         const x = getX(depth+1, childIndex);
