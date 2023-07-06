@@ -69,6 +69,9 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
     settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] });
+    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
+    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] });
 
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[2] });
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[0] });
@@ -113,7 +116,7 @@ async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[
         if (!result.finished)
             results.push(result);
         i++;
-    } while (playersNotPlaying(players).length && !result.finished && i < 20);
+    } while (playersNotPlaying(players).length && !result.finished && i < 200);
 
     console.log(results);
     let filteredResults = results.reverse();
@@ -138,7 +141,7 @@ function drawTrees(results: MatchResult[]) {
         console.log(resultsUsed);
         drawTree(rootNode, x, y, ctx);
         filteredResults = filteredResults.filter(r => !allResultsUsed.includes(r));
-        y += 200;
+        y += 250;
     } while (filteredResults.length);
 }
 
@@ -216,6 +219,9 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     // players Totte Cronblad
     // children: Kent - Totte
 
+    // players Alexander Totte
+    // children: Alexander - Totte (w)
+
     const children = [...node.children].sort((a, b) => {
         // if players in child a is in node players then sort it before child b
         if (a.data.players?.some(p => node.data.players!.includes(p)))
@@ -228,7 +234,7 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     let childIndex = 0;
     // when only child, set childIndex manually
     if (children.length === 1) {
-        childIndex = node.data.players!.findIndex(p => node.children[0].data.players?.includes(p));
+        childIndex = node.data.players!.findIndex(p => node.children[0].data.winner === p);
     }
 
     for (const childNode of children) {
