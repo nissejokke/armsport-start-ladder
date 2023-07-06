@@ -1,4 +1,4 @@
-import { MatchResult, Player, play } from "./play";
+import { MatchResult, Player, play, playersNotPlaying } from "./play";
 import { TestPlayer } from "./play_test";
 import { TreeNode, appendTree, printTree, searchTree } from "./tree";
 
@@ -40,10 +40,7 @@ export async function initLadder(args: InitLadderArgs) {
     //     { name: 'Johan', strength: 1.5, wins: [], losses: [], rest: 0 },
     // ];
 
-    async function chooseWinner(p1: TestPlayer, p2: TestPlayer): Promise<Player> {
-        const winner = p1.strength > p2.strength ? p1 : p2;
-        return winner;
-    }
+    
     // async (p1, p2) => players.indexOf(p1) < players.indexOf(p2) ? p1 : p2
     
     // const names = [
@@ -55,43 +52,75 @@ export async function initLadder(args: InitLadderArgs) {
     // const players: Player[] = names.map(name => ({ name, wins: [], losses: [], rest: 0 }));
  
     const shuffledPlayers = [...players]; //shuffle(players);
+    await playBuildAndDraw(shuffledPlayers);
+}
+
+async function playBuildAndDraw(players: Player[]) {
+    async function chooseWinner(p1: TestPlayer, p2: TestPlayer): Promise<Player | undefined> {
+        return undefined;
+        const winner = p1.strength > p2.strength ? p1 : p2;
+        return winner;
+    }
 
     const results: MatchResult[] = [];
     let result: MatchResult;
+    let i = 0;
     do {
         result = await play(players, chooseWinner as (p1: Player, p2: Player) => Promise<Player>);
         drawMatchResults(result);
         results.push(result);
-    } while  (!result.finished); //(players.some(p => p.wins.length + p.losses.length === 0)); //
+        i++;
+    } while (playersNotPlaying(players).length);
 
-    const root = buildTree(results.reverse());
-    drawTree(root);
+    console.log(results);
+    let filteredResults = results.reverse().filter(r => r.players?.length);
+    drawTrees(filteredResults);
 }
 
-function buildTree(results: MatchResult[]) {
-    const root = appendTree(results[1]);
+function drawTrees(results: MatchResult[]) {
+    let filteredResults = results;
+    let allResultsUsed: MatchResult[] = [];
+    let x = 500;
+    let y = 220;
+    do {
+        const { rootNode, resultsUsed } = buildTree(filteredResults);
+        allResultsUsed.push(...resultsUsed);
+        console.log(resultsUsed);
+        drawTree(rootNode, x, y);
+        filteredResults = filteredResults.filter(r => !allResultsUsed.includes(r));
+        y += 100;
+    } while (filteredResults.length);
+}
 
-    for (let i = 2; true; i++) {
+function buildTree(results: MatchResult[]): { rootNode: TreeNode<MatchResult>, resultsUsed: MatchResult[] } {
+    const root = appendTree(results[0]);
+    let i: number;
+    const resultsUsed: MatchResult[] = [results[0]];
+
+    for (i = 1; i < results.length; i++) {
         const result = results[i];
-        if (!result) break;
-        console.log(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner.name);
-        const leaves = searchTree(root, (node) => {
+        if (!result) { break };
+        console.log(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name);
+        const foundNodes = searchTree(root, (node) => {
+            if (!result.winner) return false;
             return node.data.players!.includes(result.winner);
         });
-        console.log(leaves);
-        if (leaves.length === 0) throw new Error('No leaves found, was searching for ' + result.winner.name + ' or ' + result.loser?.name + ' in tree');
-        appendTree(result, leaves[0]); // first leave should be children rather than parent
-        
+        console.log(foundNodes);
+        if (foundNodes.length === 0) {
+            console.log('No nodes found, was searching for ' + result.winner?.name + ' or ' + result.loser?.name + ' in tree');
+            continue;
+        }
+        appendTree(result, foundNodes[0]); // first leave should be children rather than parent
+        resultsUsed.push(result);
+
         console.log('tree (#' + i + ')');
         printTree(root, (node) => node.data.players!.map(p => p.name).join(' vs '));
     }
 
-    return root;
+    return { rootNode: root, resultsUsed };
 }
 
-function drawTree(node: TreeNode<MatchResult>) {
-    const x = 500;
-    const y = 220;
+function drawTree(node: TreeNode<MatchResult>, x: number, y: number) {
     drawTreeInternal(node, 0, y, x);
 }
 
@@ -123,7 +152,7 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth, offsetY, offsetX) 
     
     // player and winner is the same so no need to draw both except for on top level
     if (depth === 0)
-        drawNode(node.data.winner.name, rootY, rootX);
+        drawNode(node.data.winner?.name ?? '?', rootY, rootX);
 
     drawPlayer(0);
     drawPlayer(1);
@@ -159,7 +188,7 @@ function drawNode(text, offsetY = 0, offsetX = 0) {
 
 
 function drawMatchResults(result: MatchResult) {
-    drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner.name);
+    drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name ?? '?');
 }
 
 function drawMatchResult(text: string) {

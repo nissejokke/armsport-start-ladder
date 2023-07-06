@@ -4,29 +4,25 @@ export interface Player {
     wins: Player[];
     losses: Player[];
     rest: number;
+    isPlaying?: boolean;
 }
 
 export interface MatchResult {
-    winner: Player;
+    winner?: Player;
     loser?: Player;
     players?: Player[];
     finished: boolean;
 }
 
 export interface PlayerStats {
-    // player: Player;
     wins: number;
     losses: number;
     matches: number;
 }
 
-
-// pick player with worst score (most losses)
-// 1. Pick two player with least matches that havent lost two times
-
 export async function play(
     players: Player[], 
-    chooseWinner: (p1: Player, p2: Player) => Promise<Player>
+    chooseWinner: (p1: Player, p2: Player) => Promise<Player | undefined>
 ): Promise<MatchResult> {
     const p1 = pick(players);
     if (!p1) throw new Error('No winner!?');
@@ -40,16 +36,31 @@ export async function play(
             finished: true
         };
     }
-    const winner = await chooseWinner(p1, p2);
-    const loser = winner === p1 ? p2 : p1;
-
-    winner.wins.push(loser);
-    loser.losses.push(winner);
     
-    // update rest
-    players.forEach(p => p.rest++);
-    winner.rest = 0;
-    loser.rest = 0;
+    p1.isPlaying = true;
+    p2.isPlaying = true;
+
+    const winner = await chooseWinner(p1, p2);
+    let loser: Player | undefined;
+    if (winner === p1)
+        loser = p2;
+    else if (winner === p2)
+        loser = p1;
+    else
+        loser = undefined;
+
+    if (winner && loser) {
+        winner.isPlaying = false;
+        loser.isPlaying = false;
+
+        winner.wins.push(loser);
+        loser.losses.push(winner);
+    
+        // update rest
+        players.forEach(p => p.rest++);
+        winner.rest = 0;
+        loser.rest = 0;
+    }
 
     return {
         players: [p1, p2],
@@ -57,6 +68,10 @@ export async function play(
         loser,
         finished: false,
     };
+}
+
+export function playersNotPlaying(players: Player[]): Player[] {
+    return players.filter(player => !player.isPlaying);
 }
 
 function pick(players: Player[], versus?: Player): Player {
@@ -70,7 +85,9 @@ function pick(players: Player[], versus?: Player): Player {
     }
 
     // console.log('A', playersInGroupA.length);
-    let sortedPlayers = [...players].filter(p => versus ? p !== versus : true)
+    let sortedPlayers = [...players]
+        .filter(p => !p.isPlaying)
+        .filter(p => versus ? p !== versus : true)
         .filter(p => {
             if (winnerGroup === true)
                 return p.losses.length === 0;
