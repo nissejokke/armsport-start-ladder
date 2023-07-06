@@ -135,7 +135,7 @@ function createCanvas(parent: Element) {
     const canvas = document.createElement('canvas');
     parent.prepend(canvas);
     canvas.width = window.outerWidth;
-    canvas.height = window.outerHeight;
+    canvas.height = window.outerHeight * 2;
     const ctx = canvas.getContext('2d')!;
     return ctx;
 }

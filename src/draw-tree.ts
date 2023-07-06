@@ -1,12 +1,7 @@
-import { buildTree } from "./build-tree";
 import { MatchResult } from "./play";
 import { TreeNode } from "./tree";
 
-export function drawTree(node: TreeNode<MatchResult>, x: number, y: number, ctx: CanvasRenderingContext2D) {
-    drawTreeInternal(node, 0, y, x, ctx);
-}
-
-function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: number, offsetX: number, ctx: CanvasRenderingContext2D) {
+export function drawTree(node: TreeNode<MatchResult>, offsetX: number, offsetY: number, ctx: CanvasRenderingContext2D, depth = 0) {
         
     function getX(depth, childIndex?: number) {
         const x = 30 * 1*(7-depth) + 100/depth*2;
@@ -76,7 +71,7 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
         ctx.lineTo(x, y);
         ctx.fill();
 
-        drawTreeInternal(childNode, depth + 1, offsetY, x, ctx);
+        drawTree(childNode, x, offsetY, ctx, depth + 1);
         i++;
     }
 }
