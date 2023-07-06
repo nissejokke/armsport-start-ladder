@@ -66,6 +66,9 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[7] });
     settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
+    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
+    settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] });
 
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[2] });
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[0] });
@@ -210,6 +213,9 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     // node data winner undefined
     // children: Jonna Cronblad, Totte Kent (both winners and players)
 
+    // players Totte Cronblad
+    // children: Kent - Totte
+
     const children = [...node.children].sort((a, b) => {
         // if players in child a is in node players then sort it before child b
         if (a.data.players?.some(p => node.data.players!.includes(p)))
@@ -222,8 +228,7 @@ function drawTreeInternal(node: TreeNode<MatchResult>, depth: number, offsetY: n
     let childIndex = 0;
     // when only child, set childIndex manually
     if (children.length === 1) {
-        if (children[0].data.players?.some(p => node.data.players!.includes(p)))
-            childIndex = 1;
+        childIndex = node.data.players!.findIndex(p => node.children[0].data.players?.includes(p));
     }
 
     for (const childNode of children) {
