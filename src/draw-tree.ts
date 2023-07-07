@@ -24,7 +24,7 @@ function getX(offsetX: number, depth: number) {
 }
 
 function getY(offsetY: number, depth: number, treeDepth: number, childIndex: number | undefined) {
-    const y = (400*treeDepth)/(depth*depth*2+1);
+    const y = (100*treeDepth)/Math.max(depth*depth*depth*0.20+1, 1);
     return offsetY + (childIndex !== undefined ? childIndex * y - y/2 : 0);
 }
 
@@ -58,7 +58,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
     
     // line offset
     const lineXOffset = 20;
-    const lineYOffset = 15;
+    const lineYOffset = treeDepth >= 5 ? 9 : 15;
     const lineSlope = 10;
 
     function drawPlayer(playerIndex) {
@@ -73,12 +73,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         ctx.lineTo(rootX-lineXOffset, rootY+lineYOffset);
         ctx.stroke();
 
-        // ctx.beginPath();
-        // ctx.moveTo(rootX, rootY);
-        // ctx.lineTo(x, y);
-        // ctx.fill();
-
-        drawNode(node.data.players?.[playerIndex]?.name ?? '?', y, x);
+        drawNode(node.data.players?.[playerIndex]?.name ?? '?', y, x, depth >= 4 ? 'depth-gte-' + depth : 'depth-' + depth);
     }
 
     
@@ -89,7 +84,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
     if (depth === 0) {
         ctx.beginPath();
         ctx.moveTo(rootX-lineXOffset, rootY+lineYOffset);
-        ctx.lineTo(rootX + 50, rootY+lineYOffset)
+        ctx.lineTo(rootX + 150, rootY+lineYOffset)
         ctx.stroke();
 
     }
@@ -132,9 +127,9 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
     }
 }
 
-function drawNode(text, offsetY = 0, offsetX = 0) {
+function drawNode(text: string, offsetY: number, offsetX: number, ...cssClass: string[]) {
     const div = document.createElement('div');
-    div.classList.add('node');
+    div.classList.add('node', ...cssClass);
     div.setAttribute('style', `left: ${offsetX}px; top: ${offsetY}px`);
     div.innerText = text;
     document.querySelector('#ladder')!.appendChild(div);

@@ -68,12 +68,12 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
     settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
     settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] }); // 2
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
-    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] });
+    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] }); // 3
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
 
     await playBuildAndDraw(shuffledPlayers, settledMatches);
 
@@ -130,7 +130,7 @@ function createCanvas(parent: Element) {
     const canvas = document.createElement('canvas');
     parent.prepend(canvas);
     canvas.width = window.outerWidth;
-    canvas.height = window.outerHeight * 2;
+    canvas.height = window.outerHeight * 10;
     const ctx = canvas.getContext('2d')!;
     return ctx;
 }
