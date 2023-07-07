@@ -5,9 +5,10 @@ export function drawTree(node: TreeNode<MatchResult>, treeY: number, treeIndex: 
     
     const depth = calcMaxDepthOfTree(node);
     const height = calcHeightOfTree(node);
-    let x = calcWidthOfTree(node) + 100;
+    const treePadding = 100;
+    const x = calcWidthOfTree(node) + 100;
     // baseOffset + startPos of tree + half height of tree + padding
-    let y = 220 + treeY + height/2 + treeIndex * 30;
+    const y = 220 + treeY + height/2 + treeIndex * treePadding;
     
     console.log('depth=', depth);
     console.log('width=', calcWidthOfTree(node));
@@ -19,11 +20,11 @@ export function drawTree(node: TreeNode<MatchResult>, treeY: number, treeIndex: 
 }
 
 function getX(offsetX: number, depth: number) {
-    return offsetX - (depth * 100);
+    return offsetX - (depth * 150);
 }
 
 function getY(offsetY: number, depth: number, treeDepth: number, childIndex: number | undefined) {
-    const y = (33*treeDepth)/depth*2;
+    const y = (400*treeDepth)/(depth*depth*2+1);
     return offsetY + (childIndex !== undefined ? childIndex * y - y/2 : 0);
 }
 
@@ -52,26 +53,46 @@ function calcWidthOfTree(node: TreeNode<MatchResult>) {
 }
 
 function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offsetX: number, offsetY: number, ctx: CanvasRenderingContext2D, depth: number) {
+    const rootX = getX(offsetX, depth);
+    const rootY = getY(offsetY, depth, treeDepth, undefined);
+    
+    // line offset
+    const lineXOffset = 20;
+    const lineYOffset = 15;
+    const lineSlope = 10;
 
     function drawPlayer(playerIndex) {
         let x = getX(offsetX, depth + 1);
         let y = getY(offsetY, depth + 1, treeDepth, playerIndex);
 
         ctx.beginPath();
-        ctx.moveTo(rootX, rootY);
-        ctx.lineTo(x, y);
-        ctx.fill();
+        // horizontal line under name
+        ctx.moveTo(x-(depth+1 !== treeDepth ? lineXOffset : 10), y+lineYOffset);
+        ctx.lineTo(rootX-lineXOffset-lineSlope, y+lineYOffset);
+        // vertical line
+        ctx.lineTo(rootX-lineXOffset, rootY+lineYOffset);
+        ctx.stroke();
+
+        // ctx.beginPath();
+        // ctx.moveTo(rootX, rootY);
+        // ctx.lineTo(x, y);
+        // ctx.fill();
 
         drawNode(node.data.players?.[playerIndex]?.name ?? '?', y, x);
     }
 
-    const rootX = getX(offsetX, depth);
-    const rootY = getY(offsetY, depth, treeDepth, undefined);
     
     // player and winner is the same so no need to draw both except for on top level
     // if (depth === 0)
     // keeping this as it reveals issues with printing the tree
     drawNode(node.data.winner?.name ?? '?', rootY, rootX);
+    if (depth === 0) {
+        ctx.beginPath();
+        ctx.moveTo(rootX-lineXOffset, rootY+lineYOffset);
+        ctx.lineTo(rootX + 50, rootY+lineYOffset)
+        ctx.stroke();
+
+    }
 
     drawPlayer(0);
     drawPlayer(1);
