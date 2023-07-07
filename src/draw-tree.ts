@@ -1,27 +1,60 @@
 import { MatchResult } from "./play";
 import { TreeNode } from "./tree";
 
-export function drawTree(node: TreeNode<MatchResult>, treeIndex: number, ctx: CanvasRenderingContext2D, depth = 0) {
-    let x = 500;
-    let y = 220 + 250 * (treeIndex);
+export function drawTree(node: TreeNode<MatchResult>, treeY: number, treeIndex: number, ctx: CanvasRenderingContext2D, depth = 0): { treeHeight: number} {
+    
+    console.log('depth=', calcMaxDepthOfTree(node));
+    console.log('width=', calcWidthOfTree(node));
+    console.log('height=', calcHeightOfTree(node));
+    
+    const height = calcHeightOfTree(node);
+    let x = calcWidthOfTree(node) + 100;
+    // baseOffset + startPos of tree + half height of tree + padding
+    let y = 220 + treeY + height/2 + treeIndex * 30;
 
     drawTreeAtPosition(node, x, y, ctx);
+
+    return { treeHeight: calcHeightOfTree(node) };
+}
+
+function getX(offsetX: number, depth: number) {
+    return offsetX - (depth * 100);
+}
+
+function getY(offsetY: number, depth: number, childIndex?: number) {
+    const y = 100/depth*2;
+    return offsetY + (childIndex !== undefined ? childIndex * y - y/2 : 0);
+}
+
+function calcMaxDepthOfTree(node: TreeNode<MatchResult>, depth = 1): number {
+    const depths: number[] = [];
+    if (node.children.length == 0)
+        return depth;
+    for (const child of node.children)
+        depths.push(calcMaxDepthOfTree(child, depth + 1));
+    return Math.max(...depths);
+}
+
+function calcHeightOfTree(node: TreeNode<MatchResult>) {
+    const depth = calcMaxDepthOfTree(node);
+    let y = 0;
+    y = getY(y, 0);
+    for (let i = 1; i <= depth; i++) {
+        y = getY(y, i, 0);
+    }
+    return -y*2;
+}
+
+function calcWidthOfTree(node: TreeNode<MatchResult>) {
+    const depth = calcMaxDepthOfTree(node);
+    return -getX(0, depth);
 }
 
 function drawTreeAtPosition(node: TreeNode<MatchResult>, offsetX: number, offsetY: number, ctx: CanvasRenderingContext2D, depth = 0) {
-        
-    function getX(depth, childIndex?: number) {
-        const x = 30 * 1*(7-depth) + 100/depth*2;
-        return offsetX + (childIndex !== undefined ? childIndex * x - x/2 : 0);
-    }
-
-    function getY(depth) {
-        return offsetY + (depth * 50);
-    }
 
     function drawPlayer(playerIndex) {
-        let y = getY(depth + 1);
-        let x = getX(depth + 1, playerIndex);
+        let x = getX(offsetX, depth + 1);
+        let y = getY(offsetY, depth + 1, playerIndex);
 
         ctx.beginPath();
         ctx.moveTo(rootX, rootY);
@@ -31,8 +64,8 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, offsetX: number, offset
         drawNode(node.data.players?.[playerIndex]?.name ?? '?', y, x);
     }
 
-    const rootX = getX(depth);
-    const rootY = getY(depth);
+    const rootX = getX(offsetX, depth);
+    const rootY = getY(offsetY, depth);
     
     // player and winner is the same so no need to draw both except for on top level
     // if (depth === 0)
@@ -70,15 +103,9 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, offsetX: number, offset
     let i = 0;
     for (const childNode of node.children) {
         const childIndex = childIndices[i];
-        const y = getY(depth+1);
-        const x = getX(depth+1, childIndex);
+        const y = getY(offsetY, depth+1, childIndex);
         
-        ctx.beginPath();
-        ctx.moveTo(rootX, rootY);
-        ctx.lineTo(x, y);
-        ctx.fill();
-
-        drawTreeAtPosition(childNode, x, offsetY, ctx, depth + 1);
+        drawTreeAtPosition(childNode, offsetX, y, ctx, depth + 1);
         i++;
     }
 }

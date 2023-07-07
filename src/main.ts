@@ -67,19 +67,14 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
     settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
-    settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] });
-    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
-    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] });
+    // settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
+    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] });
 
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[2] });
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[0] });
-    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[5] });
-    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[6] });
     await playBuildAndDraw(shuffledPlayers, settledMatches);
 
     writePlayerStats(shuffledPlayers);
