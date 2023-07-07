@@ -1,7 +1,14 @@
 import { MatchResult } from "./play";
 import { TreeNode } from "./tree";
 
-export function drawTree(node: TreeNode<MatchResult>, offsetX: number, offsetY: number, ctx: CanvasRenderingContext2D, depth = 0) {
+export function drawTree(node: TreeNode<MatchResult>, treeIndex: number, ctx: CanvasRenderingContext2D, depth = 0) {
+    let x = 500;
+    let y = 220 + 250 * (treeIndex);
+
+    drawTreeAtPosition(node, x, y, ctx);
+}
+
+function drawTreeAtPosition(node: TreeNode<MatchResult>, offsetX: number, offsetY: number, ctx: CanvasRenderingContext2D, depth = 0) {
         
     function getX(depth, childIndex?: number) {
         const x = 30 * 1*(7-depth) + 100/depth*2;
@@ -71,7 +78,7 @@ export function drawTree(node: TreeNode<MatchResult>, offsetX: number, offsetY: 
         ctx.lineTo(x, y);
         ctx.fill();
 
-        drawTree(childNode, x, offsetY, ctx, depth + 1);
+        drawTreeAtPosition(childNode, x, offsetY, ctx, depth + 1);
         i++;
     }
 }
