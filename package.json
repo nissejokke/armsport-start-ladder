@@ -4,8 +4,8 @@
   "description": "",
   "main": "lib.js",
   "scripts": {
-    "build": "bun build src/*.ts --outdir src/dist",
-    "dev": "bun build src/*.ts --outdir src/dist --watch",
+    "build": "bun build src/main.ts --outdir src/dist",
+    "dev": "bun build src/main.ts --outdir src/dist --watch",
     "test": "deno test"
   },
   "author": "",

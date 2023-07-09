@@ -73,7 +73,7 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
     settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] }); // 3
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
 
     await playBuildAndDraw(shuffledPlayers, settledMatches);
 
