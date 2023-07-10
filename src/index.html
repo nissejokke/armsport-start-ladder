@@ -18,6 +18,25 @@
 
             #log {
                 position: absolute;
+                right: 0;
+            }
+
+            #ladder {
+                position: absolute;
+                padding-top:5px;
+            }
+
+            #result table td {
+                padding: 1px 5px;
+            }
+
+            tr.lost td {
+                font-style: italic;
+                color: grey;
+            }
+
+            #status {
+                font-size: 30px;
             }
         </style>
     </head>
@@ -29,6 +48,21 @@
             initLadder({});
         </script>
         <div id="log"></div>
+        <div id="status">
+            <p></p>
+        </div>
+        <div id="result">
+            <table>
+                <thead>
+                    <th></th>
+                    <th>Wins</th>
+                    <th>Losses</th>
+                    <th>Matches</th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
         <div id="ladder">
             <canvas id="canvas" width="1000" height="1000"></canvas>
         </div>

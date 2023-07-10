@@ -70,22 +70,46 @@ export async function initLadder(args: InitLadderArgs) {
     settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] }); // 2
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
-    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] }); // 3
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
+    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] }); // 3
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
 
-    await playBuildAndDraw(shuffledPlayers, settledMatches);
-
-    writePlayerStats(shuffledPlayers);
+    initPlay(shuffledPlayers, settledMatches);
 }
 
-async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[]) {
+async function initPlay(players: Player[], settledMatches: SettledMatch[]) {
+
+    await playBuildAndDraw(players, settledMatches, (winner?: Player, loser?: Player) => {
+        // match result callback, recalc everything
+        if (!winner || !loser) throw new Error('No winner or loser');
+        settledMatches.push({ winner, loser });
+        resetPlayers(players);
+        initPlay(players, settledMatches);
+    });
+
+    writePlayerStats(players);
+    writePlayerStatsTable(players);
+}
+
+function resetPlayers(players: Player[]): void {
+    for (const player of players) {
+        player.rest = 0;
+        player.wins = [];
+        player.losses = [];
+        player.isPlaying = false;
+    }
+}
+
+async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[], onMatchResult: (winner?: Player, loser?: Player) => void) {
     // prepare html stuff
     const ladder = document.querySelector('#ladder')!;
     while (ladder.childNodes.length)
         ladder.removeChild(ladder.childNodes[0]);
-    const ctx = createCanvas(ladder);
+        const ctx = createCanvas(ladder);
+    const log = document.querySelector('#log')!;
+    while (log.childNodes.length)
+        log.removeChild(log.childNodes[0]);
 
     let settledMatchesPool = [...settledMatches];
 
@@ -121,9 +145,12 @@ async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[
     } while (playersNotPlaying(players).length && !result.finished && i < 10000);
 
     console.log(results);
+    writeStatus({ players, results });
+
     let filteredResults = results.reverse();
 
-    buildAndDrawTrees(filteredResults, ctx);
+
+    buildAndDrawTrees(filteredResults, players, ctx, onMatchResult);
 }
 
 function createCanvas(parent: Element) {
@@ -143,4 +170,55 @@ function drawMatchResult(text: string) {
     const div = document.createElement('div');
     div.innerText = text;
     document.querySelector('#log')!.appendChild(div);
+}
+
+function writeStatus({ players, results }: { players: Player[], results: MatchResult[] }) {
+    const status = document.querySelector('#status')!;
+    while (status.childNodes.length)
+        status.removeChild(status.childNodes[0]);
+
+    const nextUp = results.find(r => !r.winner);
+    if (nextUp) {
+        const playerLeft = players.filter(isPlayerStillIn).length;
+        let label = '';
+        switch (playerLeft) {
+            case 2: label = 'Final: '; break;
+            case 3: label = 'Semifinal: '; break;
+            default:
+                label = 'Next up: ';
+                break;
+        }
+
+        status.textContent = label + nextUp.players![0].name + ' vs ' + nextUp.players![1].name;
+    }
+}
+
+function writePlayerStatsTable(players: Player[]) {
+    const tableBody = document.querySelector('#result table tbody')!;
+    while (tableBody.childNodes.length)
+        tableBody.removeChild(tableBody.childNodes[0]);
+
+    function appendTd(tr, text) {
+        let td = document.createElement('td');
+        td.innerText = text;
+        tr.appendChild(td);
+    }
+    
+    const playersSortedOnScore = [...players].sort((a, b) => b.wins.length * 2 - b.losses.length - (a.wins.length * 2 - a.losses.length));
+    for (const player of playersSortedOnScore) {
+        const tr = document.createElement('tr');
+        appendTd(tr, player.name);
+        appendTd(tr, player.wins.length);
+        appendTd(tr, player.losses.length);
+        appendTd(tr, player.wins.length + player.losses.length);
+        // appendTd(tr, player.losses.length >= 2);
+
+        if (!isPlayerStillIn(player))
+            tr.classList.add('lost');
+        tableBody.appendChild(tr);
+    }
+}
+
+function isPlayerStillIn(player: Player): boolean {
+    return player.losses.length < 2;
 }

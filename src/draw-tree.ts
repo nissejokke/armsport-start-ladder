@@ -1,25 +1,26 @@
-import { MatchResult } from "./play.ts";
+import { MatchResult, Player } from "./play.ts";
 import { TreeNode } from "./tree.ts";
 
 export interface TreeDrawing {
     line: (x1: number, y1: number, x2: number, y2: number) => void;
-    drawName: (args: { x: number, y: number, text: string, cssClass: string[] }) => void;
+    drawName: (args: { x: number, y: number, text: string, cssClass: string[], onClick?: () => void }) => void;
 }
 
-export function drawTree({ node, treeY, treeIndex, canvas }: { node: TreeNode<MatchResult>; treeY: number; treeIndex: number; canvas: TreeDrawing; }): { treeHeight: number} {
+export function drawTree({ node, treeY, treeIndex, canvas, onMatchResult }: { node: TreeNode<MatchResult>; treeY: number; treeIndex: number; canvas: TreeDrawing; onMatchResult: (winner: Player, loser: Player) => void }): { treeHeight: number} {
     
+    if (!node?.data) throw new Error('node data undefined');
     const depth = calcMaxDepthOfTree(node);
     const height = calcHeightOfTree(node);
     const treePadding = 100;
     const x = calcWidthOfTree(node) + 100;
     // baseOffset + startPos of tree + half height of tree + padding
-    const y = 220 + treeY + height/2 + treeIndex * treePadding;
+    const y = 50 + treeY + height/2 + treeIndex * treePadding;
     
     console.log('depth=', depth);
     console.log('width=', calcWidthOfTree(node));
     console.log('height=', height);
 
-    drawTreeAtPosition(node, depth, x, y, canvas, 0);
+    drawTreeAtPosition(node, depth, x, y, canvas, 0, onMatchResult);
 
     return { treeHeight: height };
 }
@@ -57,7 +58,7 @@ function calcWidthOfTree(node: TreeNode<MatchResult>) {
     return -getX(0, depth);
 }
 
-function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offsetX: number, offsetY: number, canvas: TreeDrawing, depth: number) {
+function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offsetX: number, offsetY: number, canvas: TreeDrawing, depth: number, onMatchResult: (winner: Player, loser: Player) => void) {
     const rootX = getX(offsetX, depth);
     const rootY = getY(offsetY, depth, treeDepth, undefined);
     
@@ -74,14 +75,22 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         canvas.line(rootX-lineXOffset-lineSlope, y+lineYOffset, rootX-lineXOffset, rootY+lineYOffset);
         canvas.drawName({ x, y, 
             text: node.data.players?.[playerIndex]?.name ?? '?', 
-            cssClass: [depth >= 4 ? 'depth-gte-' + depth : 'depth-' + depth] 
+            cssClass: [depth >= 4 ? 'depth-gte-' + depth : 'depth-' + depth],
+            onClick: () => {
+                if (node.data.players?.[playerIndex] && node.data.players?.[1-playerIndex])
+                    onMatchResult(
+                        node.data.players![playerIndex]!, 
+                        node.data.players![1-playerIndex]! 
+                    );
+            },
         });
     }
 
-    // player and winner is the same so no need to draw both except for on top level
-    // if (depth === 0)
-    // keeping this as it reveals issues with printing the tree
-    canvas.drawName({ x: rootX, y: rootY, text: node.data.winner?.name ?? '?', cssClass: [] });
+    if (depth === 0)
+        canvas.drawName({ 
+            x: rootX, y: rootY, 
+            text: node.data.winner?.name ? node.data.winner?.name : '?', cssClass: [],
+        });
     if (depth === 0) {
         canvas.line(rootX-lineXOffset, rootY+lineYOffset, rootX + 150, rootY+lineYOffset);
     }
@@ -119,7 +128,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         const childIndex = childIndices[i];
         const y = getY(offsetY, depth+1, treeDepth, childIndex);
         
-        drawTreeAtPosition(childNode, treeDepth, offsetX, y, canvas, depth + 1);
+        drawTreeAtPosition(childNode, treeDepth, offsetX, y, canvas, depth + 1, onMatchResult);
         i++;
     }
 }

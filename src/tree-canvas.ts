@@ -11,12 +11,14 @@ export class TreeCanvas implements TreeDrawing {
         this.ctx.stroke();
     }
 
-    drawName(args: { x: number, y: number, text: string, cssClass: string[] }): void {
-        const { x, y, text, cssClass } = args;
+    drawName(args: { x: number, y: number, text: string, cssClass: string[], onClick?: () => void }): void {
+        const { x, y, text, cssClass, onClick } = args;
         const div = document.createElement('div');
         div.classList.add('node', ...cssClass);
         div.setAttribute('style', `left: ${x}px; top: ${y}px`);
         div.innerText = text;
+        if (onClick)
+            div.onclick = onClick;
         document.querySelector('#ladder')!.appendChild(div);
     }
 }

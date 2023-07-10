@@ -22,7 +22,7 @@ Deno.test('simplest tree - depth 1', () => {
     } as TreeDrawing;
 
     // act
-    drawTree({ node: root, canvas, treeIndex: 0, treeY: 0 });
+    drawTree({ node: root, canvas, treeIndex: 0, treeY: 0, onMatchResult: () => {} });
 
     // assert
     // TODO add more asserts
@@ -30,7 +30,7 @@ Deno.test('simplest tree - depth 1', () => {
         args: [
             {
                 x: 250,
-                y: 261.6666666666667,
+                y: 91.66666666666667,
                 text: "?",
                 cssClass: [],
             },
