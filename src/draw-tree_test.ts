@@ -27,6 +27,13 @@ Deno.test('simplest tree - depth 1', () => {
     // assert
     // TODO add more asserts
     assertSpyCall(drawNameSpy, 0, {
-        args: [250, 261.6666666666667, '?', []]
+        args: [
+            {
+                x: 250,
+                y: 261.6666666666667,
+                text: "?",
+                cssClass: [],
+            },
+        ]
     });
 });

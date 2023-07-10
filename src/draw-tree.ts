@@ -3,7 +3,7 @@ import { TreeNode } from "./tree.ts";
 
 export interface TreeDrawing {
     line: (x1: number, y1: number, x2: number, y2: number) => void;
-    drawName: (x: number, y: number, text: string, cssClass: string[]) => void;
+    drawName: (args: { x: number, y: number, text: string, cssClass: string[] }) => void;
 }
 
 export function drawTree({ node, treeY, treeIndex, canvas }: { node: TreeNode<MatchResult>; treeY: number; treeIndex: number; canvas: TreeDrawing; }): { treeHeight: number} {
@@ -70,15 +70,18 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         let x = getX(offsetX, depth + 1);
         let y = getY(offsetY, depth + 1, treeDepth, playerIndex);
 
-        canvas.line(x-(depth+1 !== treeDepth ? lineXOffset : 10), y+lineYOffset, rootX-lineXOffset-lineSlope, y+lineYOffset)
+        canvas.line(x-(depth+1 !== treeDepth ? lineXOffset : 10), y+lineYOffset, rootX-lineXOffset-lineSlope, y+lineYOffset);
         canvas.line(rootX-lineXOffset-lineSlope, y+lineYOffset, rootX-lineXOffset, rootY+lineYOffset);
-        canvas.drawName(x, y, node.data.players?.[playerIndex]?.name ?? '?', [depth >= 4 ? 'depth-gte-' + depth : 'depth-' + depth]);
+        canvas.drawName({ x, y, 
+            text: node.data.players?.[playerIndex]?.name ?? '?', 
+            cssClass: [depth >= 4 ? 'depth-gte-' + depth : 'depth-' + depth] 
+        });
     }
 
     // player and winner is the same so no need to draw both except for on top level
     // if (depth === 0)
     // keeping this as it reveals issues with printing the tree
-    canvas.drawName(rootX, rootY, node.data.winner?.name ?? '?', []);
+    canvas.drawName({ x: rootX, y: rootY, text: node.data.winner?.name ?? '?', cssClass: [] });
     if (depth === 0) {
         canvas.line(rootX-lineXOffset, rootY+lineYOffset, rootX + 150, rootY+lineYOffset);
     }

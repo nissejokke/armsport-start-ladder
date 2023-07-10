@@ -11,7 +11,8 @@ export class TreeCanvas implements TreeDrawing {
         this.ctx.stroke();
     }
 
-    drawName(x: number, y: number, text: string, cssClass: string[]): void {
+    drawName(args: { x: number, y: number, text: string, cssClass: string[] }): void {
+        const { x, y, text, cssClass } = args;
         const div = document.createElement('div');
         div.classList.add('node', ...cssClass);
         div.setAttribute('style', `left: ${x}px; top: ${y}px`);
