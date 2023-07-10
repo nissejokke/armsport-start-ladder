@@ -14,7 +14,7 @@ export function drawTree({ node, treeY, treeIndex, canvas, onMatchResult }: { no
     const treePadding = 100;
     const x = calcWidthOfTree(node) + 100;
     // baseOffset + startPos of tree + half height of tree + padding
-    const y = 50 + treeY + height/2 + treeIndex * treePadding;
+    const y = 10 + treeY + height/2 + treeIndex * treePadding;
     
     console.log('depth=', depth);
     console.log('width=', calcWidthOfTree(node));

@@ -2,7 +2,16 @@
 <html>
     <head>
         <title>Armsport start ladder</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
+            html, body {
+                margin: 0;
+                padding: 10px;
+            }
+
+            h1 {
+                font-weight: normal;
+            }
             .node {
                 position: absolute;
                 /* font-size: 13px; */
@@ -19,11 +28,25 @@
             #log {
                 position: absolute;
                 right: 0;
+                display: none;
             }
 
             #ladder {
-                position: absolute;
+                position: relative;
                 padding-top:5px;
+                clear: both;
+            }
+
+            table {
+                border-collapse: collapse;
+            }
+
+            table th {
+                border-bottom: 1px solid #000;
+            }
+
+            #result {
+                float: right;
             }
 
             #result table td {
@@ -36,7 +59,22 @@
             }
 
             #status {
-                font-size: 30px;
+                float: left;
+            }
+
+            #status h1 span {
+                font-weight: bold;
+            }
+
+            @media screen and (max-width: 481px) {
+                #ladder {
+                    overflow: scroll;
+                }
+
+                #result {
+                    width: 100%;
+                    margin-bottom: 20px;
+                }
             }
         </style>
     </head>
@@ -48,9 +86,6 @@
             initLadder({});
         </script>
         <div id="log"></div>
-        <div id="status">
-            <p></p>
-        </div>
         <div id="result">
             <table>
                 <thead>
@@ -62,6 +97,11 @@
                 <tbody>
                 </tbody>
             </table>
+        </div>
+        <div id="status">
+            <h1></h1>
+            <p>Preliminary matches after that:</p>
+            <ul></ul>
         </div>
         <div id="ladder">
             <canvas id="canvas" width="1000" height="1000"></canvas>

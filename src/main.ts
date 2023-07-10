@@ -173,23 +173,35 @@ function drawMatchResult(text: string) {
 }
 
 function writeStatus({ players, results }: { players: Player[], results: MatchResult[] }) {
-    const status = document.querySelector('#status')!;
-    while (status.childNodes.length)
-        status.removeChild(status.childNodes[0]);
+    // const status = document.querySelector('#status')!;
+    const header = document.querySelector('#status h1')!;
+    const list = document.querySelector('#status ul')!;
+    while (list.childNodes.length)
+        list.removeChild(list.childNodes[0]);
 
-    const nextUp = results.find(r => !r.winner);
-    if (nextUp) {
+    const nextUp = results.filter(r => !r.winner);
+    if (nextUp.length) {
         const playerLeft = players.filter(isPlayerStillIn).length;
         let label = '';
         switch (playerLeft) {
             case 2: label = 'Final: '; break;
-            case 3: label = 'Semifinal: '; break;
+            case 3: label = 'Semi-final: '; break;
             default:
                 label = 'Next up: ';
                 break;
         }
 
-        status.textContent = label + nextUp.players![0].name + ' vs ' + nextUp.players![1].name;
+        const span = document.createElement('span');
+        header.textContent = label;
+        span.innerText = nextUp[0].players![0].name + ' vs ' + nextUp[0].players![1].name;
+        header.appendChild(span);
+        if (nextUp.length > 1) {
+            for (const next of nextUp.slice(1)!) {
+                const li = document.createElement('li');
+                li.innerText = next!.players![0].name + ' vs ' + next!.players![1].name;
+                list.appendChild(li);
+            }
+        }
     }
 }
 
@@ -204,14 +216,19 @@ function writePlayerStatsTable(players: Player[]) {
         tr.appendChild(td);
     }
     
-    const playersSortedOnScore = [...players].sort((a, b) => b.wins.length * 2 - b.losses.length - (a.wins.length * 2 - a.losses.length));
+    const playersSortedOnScore = [...players].sort((a, b) => {
+        if (a.losses.length >= 2 && b.losses.length < 2)
+            return 1;
+        if (b.losses.length >= 2 && a.losses.length < 2)
+            return -1;
+        return b.wins.length * 2 - b.losses.length - (a.wins.length * 2 - a.losses.length);
+    });
     for (const player of playersSortedOnScore) {
         const tr = document.createElement('tr');
         appendTd(tr, player.name);
         appendTd(tr, player.wins.length);
         appendTd(tr, player.losses.length);
         appendTd(tr, player.wins.length + player.losses.length);
-        // appendTd(tr, player.losses.length >= 2);
 
         if (!isPlayerStillIn(player))
             tr.classList.add('lost');
