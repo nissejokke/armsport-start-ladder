@@ -8,20 +8,21 @@ interface SettledMatch {
 }
 
 export interface InitLadderArgs {
+    playerNames: string[];
 }
 
-export async function initLadder(args: InitLadderArgs) {
+export async function initLadder({ playerNames }: InitLadderArgs) {
    
-    const players: TestPlayer[] = [
-        { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
-        { name: 'Totte', strength: 8, wins: [], losses: [], rest: 0 },
-        { name: 'Jonna', strength: 1.5, wins: [], losses: [], rest: 0 },
-        { name: 'Cronblad', strength: 6, wins: [], losses: [], rest: 0 },
-        { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 }, // 4
-        { name: 'Palten', strength: 5, wins: [], losses: [], rest: 0 },
-        { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
-        { name: 'Hilda', strength: 1, wins: [], losses: [], rest: 0 },
-    ];
+    // const players: TestPlayer[] = [
+    //     { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
+    //     { name: 'Totte', strength: 8, wins: [], losses: [], rest: 0 },
+    //     { name: 'Jonna', strength: 1.5, wins: [], losses: [], rest: 0 },
+    //     { name: 'Cronblad', strength: 6, wins: [], losses: [], rest: 0 },
+    //     { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 }, // 4
+    //     { name: 'Palten', strength: 5, wins: [], losses: [], rest: 0 },
+    //     { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
+    //     { name: 'Hilda', strength: 1, wins: [], losses: [], rest: 0 },
+    // ];
     // const players: TestPlayer[] = [
     //     { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 },
     //     { name: 'Cronblad', strength: 5, wins: [], losses: [], rest: 0 },
@@ -48,28 +49,28 @@ export async function initLadder(args: InitLadderArgs) {
     // ];
     // const players: Player[] = names.map(name => ({ name, wins: [], losses: [], rest: 0 }));
  
-    let shuffledPlayers = [...players] as Player[]; //shuffle(players);
+    // let shuffledPlayers = [...players] as Player[]; //shuffle(players);
     const settledMatches: SettledMatch[] = [];
     // await playBuildAndDraw(shuffledPlayers, settledMatches);
     
     // await new Promise(r => { setTimeout(r, 1000); });
-    shuffledPlayers = [...players].map(p => ({
-        name: p.name,
+    const shuffledPlayers = [...playerNames].map(name => ({
+        name: name,
         wins: [],
         losses: [],
         rest: 0
     }));
-    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
-    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[5] });
-    settledMatches.push({ winner: shuffledPlayers[6], loser: shuffledPlayers[7] });
-    settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[7] });
-    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
-    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
-    settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
-    settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] }); // 2
-    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
+    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[5] });
+    // settledMatches.push({ winner: shuffledPlayers[6], loser: shuffledPlayers[7] });
+    // settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[7] });
+    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
+    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
+    // settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] }); // 2
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
     // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] }); // 3
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
@@ -80,7 +81,7 @@ export async function initLadder(args: InitLadderArgs) {
 
 async function initPlay(players: Player[], settledMatches: SettledMatch[]) {
 
-    await playBuildAndDraw(players, settledMatches, (winner?: Player, loser?: Player) => {
+    const matchResults = await playBuildAndDraw(players, settledMatches, (winner?: Player, loser?: Player) => {
         // match result callback, recalc everything
         if (!winner || !loser) throw new Error('No winner or loser');
         settledMatches.push({ winner, loser });
@@ -88,6 +89,7 @@ async function initPlay(players: Player[], settledMatches: SettledMatch[]) {
         initPlay(players, settledMatches);
     });
 
+    writeStatus({ players, matchResults });
     writePlayerStats(players);
     writePlayerStatsTable(players);
 }
@@ -101,15 +103,19 @@ function resetPlayers(players: Player[]): void {
     }
 }
 
-async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[], onMatchResult: (winner?: Player, loser?: Player) => void) {
+async function playBuildAndDraw(
+    players: Player[], 
+    settledMatches: SettledMatch[], 
+    onMatchResult: (winner?: Player, loser?: Player) => void
+): Promise<MatchResult[]> {
     // prepare html stuff
     const ladder = document.querySelector('#ladder')!;
     while (ladder.childNodes.length)
         ladder.removeChild(ladder.childNodes[0]);
         const ctx = createCanvas(ladder);
-    const log = document.querySelector('#log')!;
-    while (log.childNodes.length)
-        log.removeChild(log.childNodes[0]);
+    // const log = document.querySelector('#log')!;
+    // while (log.childNodes.length)
+    //     log.removeChild(log.childNodes[0]);
 
     let settledMatchesPool = [...settledMatches];
 
@@ -138,19 +144,19 @@ async function playBuildAndDraw(players: Player[], settledMatches: SettledMatch[
     let i = 0;
     do {
         result = await play(players, determineWinner);
-        drawMatchResults(result);
+        // drawMatchResults(result);
         if (!result.finished)
             results.push(result);
         i++;
     } while (playersNotPlaying(players).length && !result.finished && i < 10000);
 
     console.log(results);
-    writeStatus({ players, results });
 
-    let filteredResults = results.reverse();
-
+    const filteredResults = [...results].reverse();
 
     buildAndDrawTrees(filteredResults, players, ctx, onMatchResult);
+
+    return results;
 }
 
 function createCanvas(parent: Element) {
@@ -162,46 +168,56 @@ function createCanvas(parent: Element) {
     return ctx;
 }
 
-function drawMatchResults(result: MatchResult) {
-    drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name ?? '?');
-}
+// function drawMatchResults(result: MatchResult) {
+//     drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name ?? '?');
+// }
 
-function drawMatchResult(text: string) {
-    const div = document.createElement('div');
-    div.innerText = text;
-    document.querySelector('#log')!.appendChild(div);
-}
+// function drawMatchResult(text: string) {
+//     const div = document.createElement('div');
+//     div.innerText = text;
+//     document.querySelector('#log')!.appendChild(div);
+// }
 
-function writeStatus({ players, results }: { players: Player[], results: MatchResult[] }) {
-    // const status = document.querySelector('#status')!;
+function writeStatus({ players, matchResults }: { players: Player[], matchResults: MatchResult[] }) {
     const header = document.querySelector('#status h1')!;
+    header.textContent = '';
     const list = document.querySelector('#status ul')!;
     while (list.childNodes.length)
-        list.removeChild(list.childNodes[0]);
+    list.removeChild(list.childNodes[0]);
+    const name1 = document.querySelector('#status #name1')!;
+    const name2 = document.querySelector('#status #name2')!;
 
-    const nextUp = results.filter(r => !r.winner);
+    const nextUp = matchResults.filter(r => !r.winner);
     if (nextUp.length) {
         const playerLeft = players.filter(isPlayerStillIn).length;
         let label = '';
         switch (playerLeft) {
-            case 2: label = 'Final: '; break;
-            case 3: label = 'Semi-final: '; break;
+            case 2: label = 'Final'; break;
+            case 3: label = 'Semi-final'; break;
             default:
-                label = 'Next up: ';
+                label = 'Next up';
                 break;
         }
 
-        const span = document.createElement('span');
         header.textContent = label;
-        span.innerText = nextUp[0].players![0].name + ' vs ' + nextUp[0].players![1].name;
-        header.appendChild(span);
+        name1.textContent = nextUp[0].players![0].name;
+        name2.textContent = nextUp[0].players![1].name;
+
         if (nextUp.length > 1) {
             for (const next of nextUp.slice(1)!) {
                 const li = document.createElement('li');
                 li.innerText = next!.players![0].name + ' vs ' + next!.players![1].name;
                 list.appendChild(li);
             }
+
+            document.querySelector('#status p')!.textContent = 'Preliminary matches after that:';
         }
+    }
+    else {
+        header.textContent = 'Winner: ';
+        const span = document.createElement('span');
+        span.innerText = players.find(p => p.losses.length < 2)?.name ?? '';
+        header.appendChild(span);
     }
 }
 

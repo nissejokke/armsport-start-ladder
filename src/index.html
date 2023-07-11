@@ -3,6 +3,8 @@
     <head>
         <title>Armsport start ladder</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/grids-responsive-min.css">
         <style>
             html, body {
                 margin: 0;
@@ -12,9 +14,13 @@
             h1 {
                 font-weight: normal;
             }
+
+            .box-padding {
+                padding-bottom: 20px;
+            }
+
             .node {
                 position: absolute;
-                /* font-size: 13px; */
             }
 
             .depth-gte-4 {
@@ -37,36 +43,50 @@
                 clear: both;
             }
 
-            table {
-                border-collapse: collapse;
-            }
-
-            table th {
-                border-bottom: 1px solid #000;
-            }
-
-            #result {
-                float: right;
-            }
-
-            #result table td {
-                padding: 1px 5px;
-            }
-
             tr.lost td {
                 font-style: italic;
                 color: grey;
             }
 
             #status {
-                float: left;
+                width: 100%;
+                display: grid;
+                column-gap: 1em;
             }
 
-            #status h1 span {
-                font-weight: bold;
+            #status h1 {
+                grid-row: 1;
+                grid-column: 1 / span 2;
+                text-align: center;
+            }
+            #status h2 {
+                grid-row: 2;
             }
 
-            @media screen and (max-width: 481px) {
+            #status #name1 {
+                grid-column: 1 / 2;
+                text-align: right;
+            }
+
+            #status #name2 {
+                grid-column: 2 / 2;
+                text-align: left;
+            }
+
+            #status p {
+                text-align: center;
+                grid-column: 1 / span 2;
+            }
+
+            #status ul {
+                grid-column: 1 / span 2;
+            }
+
+            #txtTeams, #txtPlayers {
+                height: 300px;
+            }
+
+            /* @media screen and (max-width: 481px) {
                 #ladder {
                     overflow: scroll;
                 }
@@ -75,7 +95,7 @@
                     width: 100%;
                     margin-bottom: 20px;
                 }
-            }
+            } */
         </style>
     </head>
     <body>
@@ -83,28 +103,91 @@
         <script type="module">
             import { initLadder } from './src/dist/main.js';
 
-            initLadder({});
+            function txtToPlayerNames(value) {
+                return value.split(/\n/g).map(val => val.trim()).filter(Boolean);
+            }
+            
+            function start() {
+                document.querySelector('form').style.display = 'none';
+                const playerNames = txtToPlayerNames(txtPlayersContent);
+                initLadder({ playerNames });
+            };
+
+            const txtPlayers = document.querySelector('#txtPlayers');
+            
+            const txtPlayersContent = localStorage.getItem('players') ?? '';
+            txtPlayers.value = txtPlayersContent;
+
+            const btnStart = document.querySelector('#btnStart');
+            btnStart.onclick = () => {
+                localStorage.setItem('players', txtPlayers.value);
+                start();
+            };
+
+            const btnEdit = document.querySelector('#btnEdit');
+            btnEdit.onclick = () => {
+                document.querySelector('#result').style.display = 'none';
+                document.querySelector('#status').style.display = 'none';
+                document.querySelector('#ladder').style.display = 'none';
+                document.querySelector('form').style.display = 'block';
+                btnEdit.style.display = 'none';
+            };
+
+            if (txtPlayers.value)
+                start();
         </script>
-        <div id="log"></div>
-        <div id="result">
-            <table>
-                <thead>
-                    <th></th>
-                    <th>Wins</th>
-                    <th>Losses</th>
-                    <th>Matches</th>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
-        <div id="status">
-            <h1></h1>
-            <p>Preliminary matches after that:</p>
-            <ul></ul>
-        </div>
-        <div id="ladder">
-            <canvas id="canvas" width="1000" height="1000"></canvas>
+
+        <div class="pure-g">
+            <div class="box pure-u-1 box-padding">
+                <form class="pure-form pure-form-stacked">
+                    <fieldset>
+                        <legend>Enter teams and contestants</legend>
+                        <div class="pure-g">
+                            <div class="pure-u-1 pure-u-sm-1-2">
+                                <label for="txtTeams">Teams</label>
+                                <textarea id="txtTeams" class="pure-input-1"></textarea>
+                            </div>
+                            <div class="pure-u-1 pure-u-sm-1-2">
+                                <label for="txtPlayers">Players</label>
+                                <textarea id="txtPlayers" class="pure-input-1"></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" id="btnStart" class="pure-button pure-button-primary">Submit</button>
+                    </fieldset>
+                </form>
+                <div class="pure-u-1">
+                    <button type="button" id="btnEdit" class="pure-button pure-button-secondary">Stop match - edit teams and contestants</button>
+                </div>
+            </div>
+            </form>
+            <div class="box pure-u-1 pure-u-sm-1-2">
+                <div id="status">
+                    <h1></h1>
+                    <h2 id="name1"></h2>
+                    <h2 id="name2"></h2>
+                    <p></p>
+                    <ul></ul>
+                </div>
+            </div>
+            <div class="box pure-u-1 pure-u-sm-1-2">
+                <div id="result">
+                    <table class="pure-table pure-table-horizontal">
+                        <thead>
+                            <th></th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Matches</th>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="box pure-u-1">
+                <div id="ladder">
+                    <canvas id="canvas" width="1000" height="1000"></canvas>
+                </div>
+            </div>
         </div>
     </body>
 </html>

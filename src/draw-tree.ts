@@ -75,7 +75,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         canvas.line(rootX-lineXOffset-lineSlope, y+lineYOffset, rootX-lineXOffset, rootY+lineYOffset);
         canvas.drawName({ x, y, 
             text: node.data.players?.[playerIndex]?.name ?? '?', 
-            cssClass: [depth >= 4 ? 'depth-gte-' + depth : 'depth-' + depth],
+            cssClass: [depth >= 4 ? 'depth-gte-4' : 'depth-' + depth],
             onClick: () => {
                 if (node.data.players?.[playerIndex] && node.data.players?.[1-playerIndex])
                     onMatchResult(
