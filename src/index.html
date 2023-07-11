@@ -118,11 +118,21 @@
             const txtPlayersContent = localStorage.getItem('players') ?? '';
             txtPlayers.value = txtPlayersContent;
 
-            const btnStart = document.querySelector('#btnStart');
-            btnStart.onclick = () => {
+            // const btnStart = document.querySelector('#btnStart');
+            function formStart(ev) {
+                ev.preventDefault();
                 localStorage.setItem('players', txtPlayers.value);
+                document.querySelector('#result').style.display = 'block';
+                document.querySelector('#status').style.display = 'grid';
+                document.querySelector('#ladder').style.display = 'block';
+                btnEdit.style.display = 'block';
                 start();
             };
+            const element = document.querySelector('form');
+            element.addEventListener('submit', event => {
+                event.preventDefault();
+                formStart(event);
+            });
 
             const btnEdit = document.querySelector('#btnEdit');
             btnEdit.onclick = () => {
@@ -152,7 +162,7 @@
                                 <textarea id="txtPlayers" class="pure-input-1"></textarea>
                             </div>
                         </div>
-                        <button type="submit" id="btnStart" class="pure-button pure-button-primary">Submit</button>
+                        <button type="submit" id="btnStart" class="pure-button pure-button-primary">Start competition</button>
                     </fieldset>
                 </form>
                 <div class="pure-u-1">
