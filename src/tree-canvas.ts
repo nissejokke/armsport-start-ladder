@@ -17,8 +17,10 @@ export class TreeCanvas implements TreeDrawing {
         div.classList.add('node', ...cssClass);
         div.setAttribute('style', `left: ${x}px; top: ${y}px`);
         div.innerText = text;
-        if (onClick)
+        if (onClick) {
             div.onclick = onClick;
+            div.classList.add('link');
+        }
         document.querySelector('#ladder')!.appendChild(div);
     }
 }

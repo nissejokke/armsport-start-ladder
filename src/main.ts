@@ -11,6 +11,8 @@ export interface InitLadderArgs {
     playerNames: string[];
 }
 
+export type MatchResultCallback = (winner?: Player, loser?: Player) => void;
+
 export async function initLadder({ playerNames }: InitLadderArgs) {
    
     // const players: TestPlayer[] = [
@@ -81,15 +83,17 @@ export async function initLadder({ playerNames }: InitLadderArgs) {
 
 async function initPlay(players: Player[], settledMatches: SettledMatch[]) {
 
-    const matchResults = await playBuildAndDraw(players, settledMatches, (winner?: Player, loser?: Player) => {
+    function onMatchResult(winner?: Player, loser?: Player) {
         // match result callback, recalc everything
         if (!winner || !loser) throw new Error('No winner or loser');
         settledMatches.push({ winner, loser });
         resetPlayers(players);
         initPlay(players, settledMatches);
-    });
+    }
 
-    writeStatus({ players, matchResults });
+    const matchResults = await playBuildAndDraw(players, settledMatches, onMatchResult);
+
+    writeStatus({ players, matchResults, onMatchResult });
     writePlayerStats(players);
     writePlayerStatsTable(players);
 }
@@ -106,16 +110,13 @@ function resetPlayers(players: Player[]): void {
 async function playBuildAndDraw(
     players: Player[], 
     settledMatches: SettledMatch[], 
-    onMatchResult: (winner?: Player, loser?: Player) => void
+    onMatchResult: MatchResultCallback
 ): Promise<MatchResult[]> {
     // prepare html stuff
     const ladder = document.querySelector('#ladder')!;
     while (ladder.childNodes.length)
         ladder.removeChild(ladder.childNodes[0]);
         const ctx = createCanvas(ladder);
-    // const log = document.querySelector('#log')!;
-    // while (log.childNodes.length)
-    //     log.removeChild(log.childNodes[0]);
 
     let settledMatchesPool = [...settledMatches];
 
@@ -144,7 +145,6 @@ async function playBuildAndDraw(
     let i = 0;
     do {
         result = await play(players, determineWinner);
-        // drawMatchResults(result);
         if (!result.finished)
             results.push(result);
         i++;
@@ -178,14 +178,20 @@ function createCanvas(parent: Element) {
 //     document.querySelector('#log')!.appendChild(div);
 // }
 
-function writeStatus({ players, matchResults }: { players: Player[], matchResults: MatchResult[] }) {
+function writeStatus({ 
+    players, matchResults, onMatchResult 
+}: { 
+    players: Player[], 
+    matchResults: MatchResult[], 
+    onMatchResult: MatchResultCallback 
+}) {
     const header = document.querySelector('#status h1')!;
     header.textContent = '';
     const list = document.querySelector('#status ul')!;
     while (list.childNodes.length)
     list.removeChild(list.childNodes[0]);
-    const name1 = document.querySelector('#status #name1')!;
-    const name2 = document.querySelector('#status #name2')!;
+    const name1: HTMLElement = document.querySelector('#status #name1')!;
+    const name2: HTMLElement = document.querySelector('#status #name2')!;
 
     const nextUp = matchResults.filter(r => !r.winner);
     if (nextUp.length) {
@@ -202,6 +208,12 @@ function writeStatus({ players, matchResults }: { players: Player[], matchResult
         header.textContent = label;
         name1.textContent = nextUp[0].players![0].name;
         name2.textContent = nextUp[0].players![1].name;
+        name1.onclick = () => {
+            onMatchResult(nextUp[0].players![0], nextUp[0].players![1]);
+        };
+        name2.onclick = () => {
+            onMatchResult(nextUp[0].players![1], nextUp[0].players![0]);
+        };
 
         if (nextUp.length > 1) {
             for (const next of nextUp.slice(1)!) {
@@ -218,6 +230,8 @@ function writeStatus({ players, matchResults }: { players: Player[], matchResult
         const span = document.createElement('span');
         span.innerText = players.find(p => p.losses.length < 2)?.name ?? '';
         header.appendChild(span);
+        name1.textContent = '';
+        name2.textContent = '';
     }
 }
 
