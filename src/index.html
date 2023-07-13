@@ -46,7 +46,6 @@
             }
 
             #status .player {
-                font-weight: bold;
                 font-size: 1.1em;
             }
 
@@ -64,6 +63,10 @@
 
             .hidden {
                 display: none;
+            }
+
+            .bold {
+                font-weight: bold;
             }
         </style>
     </head>
@@ -117,6 +120,7 @@
                 start();
         </script>
 
+        <h1>Armsport ladder</h1>
         <div class="pure-g">
             <div class="box pure-u-1 box-padding">
                 <form class="pure-form pure-form-stacked" style="display: none">
@@ -141,8 +145,8 @@
             </div>
             </form>
             <div class="box pure-u-1 pure-u-sm-1-4">
+                <h2>Next up</h2>
                 <div id="status">
-                    <h2 id="header"></h2>
                     <div id="text"></div>
                     <p></p>
                     <ul></ul>

@@ -6,15 +6,19 @@ export interface TreeDrawing {
     drawName: (args: { x: number, y: number, text: string, cssClass: string[], onClick?: () => void }) => void;
 }
 
+const treeLineXLength = 175;
+
 export function drawTree({ node, treeY, treeIndex, canvas, onMatchResult }: { node: TreeNode<MatchResult>; treeY: number; treeIndex: number; canvas: TreeDrawing; onMatchResult: (winner: Player, loser: Player) => void }): { treeHeight: number} {
     
     if (!node?.data) throw new Error('node data undefined');
     const depth = calcMaxDepthOfTree(node);
     const height = calcHeightOfTree(node);
     const treePadding = 100;
-    const x = calcWidthOfTree(node) + 20;
+    const treeLeftMargin = 20;
+    const treeTopMargin = 10;
+    const x = calcWidthOfTree(node) + treeLeftMargin;
     // baseOffset + startPos of tree + half height of tree + padding
-    const y = 10 + treeY + height/2 + treeIndex * treePadding;
+    const y = treeTopMargin + treeY + height/2 + treeIndex * treePadding;
     
     console.log('depth=', depth);
     console.log('width=', calcWidthOfTree(node));
@@ -26,7 +30,7 @@ export function drawTree({ node, treeY, treeIndex, canvas, onMatchResult }: { no
 }
 
 function getX(offsetX: number, depth: number) {
-    return offsetX - (depth * 150);
+    return offsetX - (depth * treeLineXLength);
 }
 
 function getY(offsetY: number, depth: number, treeDepth: number, childIndex: number | undefined) {
@@ -92,7 +96,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
             text: node.data.winner?.name ? node.data.winner?.name : '?', cssClass: [],
         });
     if (depth === 0) {
-        canvas.line(rootX-lineXOffset, rootY+lineYOffset, rootX + 150, rootY+lineYOffset);
+        canvas.line(rootX-lineXOffset, rootY+lineYOffset, rootX + treeLineXLength, rootY+lineYOffset);
     }
 
     drawPlayer(0);

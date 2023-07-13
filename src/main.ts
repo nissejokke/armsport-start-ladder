@@ -211,31 +211,30 @@ function writeStatus({
     matchResults: MatchResult[], 
     onMatchResult: MatchResultCallback 
 }) {
-    const header = document.querySelector('#status #header')!;
-    header.textContent = '';
     const text = document.querySelector('#status #text')!;
     text.textContent = '';
     const list = document.querySelector('#status ul')!;
     while (list.childNodes.length)
         list.removeChild(list.childNodes[0]);
+    document.querySelector('#status p')!.textContent = '';
 
-
-    const name1: HTMLElement = document.querySelector('#status #name1')!;
-    const name2: HTMLElement = document.querySelector('#status #name2')!;
-
-    const nextUp = matchResults.filter(r => !r.winner);
+    const nextUp = matchResults.filter(r => !r.winner && r.players?.filter(isPlayerStillIn).length === 2);
     if (nextUp.length) {
         const playerLeft = players.filter(isPlayerStillIn).length;
         let label = '';
         switch (playerLeft) {
-            case 2: label = 'Final'; break;
-            case 3: label = 'Semi-final'; break;
+            case 2: label = 'Final '; break;
+            case 3: label = 'Semi-final '; break;
             default:
-                label = 'Next up';
+                label = '';
                 break;
         }
 
-        header.textContent = label;
+        const lbl = document.createElement('span');
+        lbl.classList.add('bold');
+        lbl.textContent = label;
+        text.appendChild(lbl);
+
         const name1 = document.createElement('span');
         name1.textContent = nextUp[0].players![0].name;
         name1.onclick = () => {
@@ -267,12 +266,7 @@ function writeStatus({
         }
     }
     else {
-        header.textContent = 'Winner: ';
-        const span = document.createElement('span');
-        span.innerText = players.find(p => p.losses.length < 2)?.name ?? '';
-        header.appendChild(span);
-        name1.textContent = '';
-        name2.textContent = '';
+        text.textContent = 'Winner: ' + players.find(p => p.losses.length < 2)?.name ?? '';
     }
 }
 
