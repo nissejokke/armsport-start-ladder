@@ -85,8 +85,8 @@ export async function initLadder({ playerNames }: InitLadderArgs) {
        3 Kent
        4 Jonna
      */
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
+    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
+    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
     // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
     // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[4] });
@@ -193,6 +193,8 @@ function createCanvas(parent: Element) {
 }
 
 function drawMatchResults(result: MatchResult) {
+    // const header = document.createE
+    // document.querySelector('#log')!.appendChild(div);
     drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1]?.name + ', winner: ' + (result.winner?.name ?? '?'));
 }
 
@@ -209,11 +211,15 @@ function writeStatus({
     matchResults: MatchResult[], 
     onMatchResult: MatchResultCallback 
 }) {
-    const header = document.querySelector('#status h1')!;
+    const header = document.querySelector('#status #header')!;
     header.textContent = '';
+    const text = document.querySelector('#status #text')!;
+    text.textContent = '';
     const list = document.querySelector('#status ul')!;
     while (list.childNodes.length)
-    list.removeChild(list.childNodes[0]);
+        list.removeChild(list.childNodes[0]);
+
+
     const name1: HTMLElement = document.querySelector('#status #name1')!;
     const name2: HTMLElement = document.querySelector('#status #name2')!;
 
@@ -230,14 +236,25 @@ function writeStatus({
         }
 
         header.textContent = label;
+        const name1 = document.createElement('span');
         name1.textContent = nextUp[0].players![0].name;
-        name2.textContent = nextUp[0].players![1].name;
         name1.onclick = () => {
             onMatchResult(nextUp[0].players![0], nextUp[0].players![1]);
         };
+        name1.classList.add('player', 'link');
+        text.appendChild(name1);
+        
+        const separator = document.createElement('span');
+        separator.textContent = ' vs ';
+        text.appendChild(separator);
+        
+        const name2 = document.createElement('span');
+        name2.textContent = nextUp[0].players![1].name;
         name2.onclick = () => {
             onMatchResult(nextUp[0].players![1], nextUp[0].players![0]);
         };
+        name2.classList.add('player', 'link');
+        text.appendChild(name2);
 
         if (nextUp.length > 1) {
             for (const next of nextUp.slice(1)!) {

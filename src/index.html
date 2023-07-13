@@ -45,38 +45,9 @@
                 color: grey;
             }
 
-            #status {
-                width: 100%;
-                display: grid;
-                column-gap: 1em;
-            }
-
-            #status h1 {
-                grid-row: 1;
-                grid-column: 1 / span 2;
-                text-align: center;
-            }
-            #status h2 {
-                grid-row: 2;
-            }
-
-            #status #name1 {
-                grid-column: 1 / 2;
-                text-align: right;
-            }
-
-            #status #name2 {
-                grid-column: 2 / 2;
-                text-align: left;
-            }
-
-            #status p {
-                text-align: center;
-                grid-column: 1 / span 2;
-            }
-
-            #status ul {
-                grid-column: 1 / span 2;
+            #status .player {
+                font-weight: bold;
+                font-size: 1.1em;
             }
 
             #txtTeams, #txtPlayers {
@@ -87,19 +58,13 @@
                 cursor: pointer;
                 font-style: italic;
                 text-decoration: underline;
+                color: darkblue;
                 
             }
 
-            /* @media screen and (max-width: 481px) {
-                #ladder {
-                    overflow: scroll;
-                }
-
-                #result {
-                    width: 100%;
-                    margin-bottom: 20px;
-                }
-            } */
+            .hidden {
+                display: none;
+            }
         </style>
     </head>
     <body>
@@ -154,7 +119,7 @@
 
         <div class="pure-g">
             <div class="box pure-u-1 box-padding">
-                <form class="pure-form pure-form-stacked">
+                <form class="pure-form pure-form-stacked" style="display: none">
                     <fieldset>
                         <legend>Enter teams and contestants</legend>
                         <div class="pure-g">
@@ -177,14 +142,19 @@
             </form>
             <div class="box pure-u-1 pure-u-sm-1-4">
                 <div id="status">
-                    <h1></h1>
-                    <h2 id="name1" class="link"></h2>
-                    <h2 id="name2" class="link"></h2>
+                    <h2 id="header"></h2>
+                    <div id="text"></div>
                     <p></p>
                     <ul></ul>
                 </div>
             </div>
+            <div class="box pure-u-1 pure-u-sm-1-4">
+                <h2>Match log</h2>
+                <div id="log">
+                </div>
+            </div>
             <div class="box pure-u-1 pure-u-sm-1-2">
+                <h2>Current standings</h2>
                 <div id="result">
                     <table class="pure-table pure-table-horizontal">
                         <thead>
@@ -196,10 +166,6 @@
                         <tbody>
                         </tbody>
                     </table>
-                </div>
-            </div>
-            <div class="box pure-u-1 pure-u-sm-1-4">
-                <div id="log">
                 </div>
             </div>
             <div class="box pure-u-1">
