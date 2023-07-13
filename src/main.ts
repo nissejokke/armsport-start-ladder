@@ -87,9 +87,9 @@ export async function initLadder({ playerNames }: InitLadderArgs) {
      */
     settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
     settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
-    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
-    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[4] });
+    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
+    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
+    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[4] });
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
     // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[3] });
     // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
@@ -193,8 +193,6 @@ function createCanvas(parent: Element) {
 }
 
 function drawMatchResults(result: MatchResult) {
-    // const header = document.createE
-    // document.querySelector('#log')!.appendChild(div);
     drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1]?.name + ', winner: ' + (result.winner?.name ?? '?'));
 }
 
