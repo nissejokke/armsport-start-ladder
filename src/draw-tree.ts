@@ -12,7 +12,7 @@ export function drawTree({ node, treeY, treeIndex, canvas, onMatchResult }: { no
     const depth = calcMaxDepthOfTree(node);
     const height = calcHeightOfTree(node);
     const treePadding = 100;
-    const x = calcWidthOfTree(node) + 100;
+    const x = calcWidthOfTree(node) + 20;
     // baseOffset + startPos of tree + half height of tree + padding
     const y = 10 + treeY + height/2 + treeIndex * treePadding;
     
@@ -76,13 +76,13 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         canvas.drawName({ x, y, 
             text: node.data.players?.[playerIndex]?.name ?? '?', 
             cssClass: [depth >= 4 ? 'depth-gte-4' : 'depth-' + depth],
-            onClick: () => {
+            onClick: depth === 0 && !node.data.winner ? () => {
                 if (node.data.players?.[playerIndex] && node.data.players?.[1-playerIndex])
                     onMatchResult(
                         node.data.players![playerIndex]!, 
                         node.data.players![1-playerIndex]! 
                     );
-            },
+            } : undefined,
         });
     }
 
