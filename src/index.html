@@ -32,9 +32,6 @@
             }
 
             #log {
-                position: absolute;
-                right: 0;
-                display: none;
             }
 
             #ladder {
@@ -109,19 +106,20 @@
         <script type="module">
             import { initLadder } from './src/dist/main.js';
 
+            const txtPlayers = document.querySelector('#txtPlayers');
+            
             function txtToPlayerNames(value) {
                 return value.split(/\n/g).map(val => val.trim()).filter(Boolean);
             }
             
             function start() {
                 document.querySelector('form').style.display = 'none';
-                const playerNames = txtToPlayerNames(txtPlayersContent);
+                const playerNames = txtToPlayerNames(txtPlayers.value);
                 initLadder({ playerNames });
             };
 
-            const txtPlayers = document.querySelector('#txtPlayers');
-            
             const txtPlayersContent = localStorage.getItem('players') ?? '';
+            
             txtPlayers.value = txtPlayersContent;
 
             function formStart(ev) {
@@ -176,7 +174,7 @@
                 </div>
             </div>
             </form>
-            <div class="box pure-u-1 pure-u-sm-1-2">
+            <div class="box pure-u-1 pure-u-sm-1-4">
                 <div id="status">
                     <h1></h1>
                     <h2 id="name1" class="link"></h2>
@@ -197,6 +195,10 @@
                         <tbody>
                         </tbody>
                     </table>
+                </div>
+            </div>
+            <div class="box pure-u-1 pure-u-sm-1-4">
+                <div id="log">
                 </div>
             </div>
             <div class="box pure-u-1">

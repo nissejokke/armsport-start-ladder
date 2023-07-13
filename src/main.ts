@@ -78,6 +78,22 @@ export async function initLadder({ playerNames }: InitLadderArgs) {
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
     // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
 
+    /**
+     * 0 Alex
+       1 Cronblad
+       2 Viktoria
+       3 Kent
+       4 Jonna
+     */
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
+    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
+    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
+    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[4] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
+    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[3] });
+    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
+
     initPlay(shuffledPlayers, settledMatches);
 }
 
@@ -115,8 +131,13 @@ async function playBuildAndDraw(
     // prepare html stuff
     const ladder = document.querySelector('#ladder')!;
     while (ladder.childNodes.length)
-        ladder.removeChild(ladder.childNodes[0]);
-        const ctx = createCanvas(ladder);
+    ladder.removeChild(ladder.childNodes[0]);
+
+    const log = document.querySelector('#log')!;
+    while (log.childNodes.length)
+        log.removeChild(log.childNodes[0]);
+    
+    const ctx = createCanvas(ladder);
 
     let settledMatchesPool = [...settledMatches];
 
@@ -145,8 +166,11 @@ async function playBuildAndDraw(
     let i = 0;
     do {
         result = await play(players, determineWinner);
-        if (!result.finished)
+        if (!result.finished) {
             results.push(result);
+            if (result.winner)
+                drawMatchResults(result);
+        }
         i++;
     } while (playersNotPlaying(players).length && !result.finished && i < 10000);
 
@@ -168,15 +192,15 @@ function createCanvas(parent: Element) {
     return ctx;
 }
 
-// function drawMatchResults(result: MatchResult) {
-//     drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name ?? '?');
-// }
+function drawMatchResults(result: MatchResult) {
+    drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1]?.name + ', winner: ' + (result.winner?.name ?? '?'));
+}
 
-// function drawMatchResult(text: string) {
-//     const div = document.createElement('div');
-//     div.innerText = text;
-//     document.querySelector('#log')!.appendChild(div);
-// }
+function drawMatchResult(text: string) {
+    const div = document.createElement('div');
+    div.innerText = text;
+    document.querySelector('#log')!.appendChild(div);
+}
 
 function writeStatus({ 
     players, matchResults, onMatchResult 
