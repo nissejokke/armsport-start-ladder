@@ -54,6 +54,10 @@
                 height: 300px;
             }
 
+            #ladder {
+                overflow: scroll;
+            }
+
             .link {
                 cursor: pointer;
                 font-style: italic;
@@ -73,8 +77,10 @@
     </head>
     <body>
         <script src="./src/dist/main.js" type="module"></script>
+        <script src="./src/dist/store.js" type="module"></script>
         <script type="module">
             import { initLadder } from './src/dist/main.js';
+            import { newCompetition, getCompetition } from './src/dist/store.js';
 
             const txtPlayers = document.querySelector('#txtPlayers');
             
@@ -82,22 +88,35 @@
                 return value.split(/\n/g).map(val => val.trim()).filter(Boolean);
             }
             
-            function start() {
+            function start(competition) {
                 document.querySelector('form').style.display = 'none';
-                const playerNames = txtToPlayerNames(txtPlayers.value);
-                initLadder({ playerNames });
+                if (competition)
+                    initLadder({ competition });
+                else {
+                    const playerNames = txtToPlayerNames(txtPlayers.value);
+                    const myCompetition = { 
+                        id: '1',
+                        created: new Date().toISOString(),
+                        playerNames: playerNames,
+                        settledMatchNames: []
+                    };
+                    newCompetition(myCompetition);
+                    initLadder({ competition: myCompetition });
+                }
+                
             };
 
             const txtPlayersContent = localStorage.getItem('players') ?? '';
-            
             txtPlayers.value = txtPlayersContent;
 
             function formStart(ev) {
                 ev.preventDefault();
                 localStorage.setItem('players', txtPlayers.value);
                 document.querySelector('#result').style.display = 'block';
-                document.querySelector('#status').style.display = 'grid';
+                document.querySelector('#status').style.display = 'block';
                 document.querySelector('#ladder').style.display = 'block';
+                document.querySelector('#log').style.display = 'block';
+                document.querySelectorAll('.box > h2').forEach(h2 => h2.style.display = 'block');
                 btnEdit.style.display = 'block';
                 start();
             };
@@ -113,12 +132,17 @@
                 document.querySelector('#result').style.display = 'none';
                 document.querySelector('#status').style.display = 'none';
                 document.querySelector('#ladder').style.display = 'none';
+                document.querySelector('#log').style.display = 'none';
                 document.querySelector('form').style.display = 'block';
+                document.querySelectorAll('.box > h2').forEach(h2 => h2.style.display = 'none');
                 btnEdit.style.display = 'none';
             };
 
-            if (txtPlayers.value)
-                start();
+            const competition = getCompetition('1');
+            if (competition)
+                start(competition);
+            else
+                btnEdit.click();
         </script>
 
         <h1>Armsport ladder</h1>
@@ -141,7 +165,7 @@
                     </fieldset>
                 </form>
                 <div class="pure-u-1">
-                    <button type="button" id="btnEdit" class="pure-button pure-button-secondary">Stop match - edit teams and contestants</button>
+                    <button type="button" id="btnEdit" class="pure-button pure-button-secondary">New competition - edit teams and contestants</button>
                 </div>
             </div>
             </form>

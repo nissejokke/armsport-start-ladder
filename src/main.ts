@@ -1,6 +1,6 @@
 import { buildAndDrawTrees } from "./build-and-draw-tree";
 import { MatchResult, Player, play, playersNotPlaying, writePlayerStats } from "./play";
-import { TestPlayer } from "./play_test";
+import { Competition, getCompetition, updateCompetition } from "./store";
 
 interface SettledMatch {
     winner: Player;
@@ -8,103 +8,43 @@ interface SettledMatch {
 }
 
 export interface InitLadderArgs {
-    playerNames: string[];
+    competition: Competition;
 }
 
 export type MatchResultCallback = (winner?: Player, loser?: Player) => void;
 
-export async function initLadder({ playerNames }: InitLadderArgs) {
-   
-    // const players: TestPlayer[] = [
-    //     { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
-    //     { name: 'Totte', strength: 8, wins: [], losses: [], rest: 0 },
-    //     { name: 'Jonna', strength: 1.5, wins: [], losses: [], rest: 0 },
-    //     { name: 'Cronblad', strength: 6, wins: [], losses: [], rest: 0 },
-    //     { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 }, // 4
-    //     { name: 'Palten', strength: 5, wins: [], losses: [], rest: 0 },
-    //     { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
-    //     { name: 'Hilda', strength: 1, wins: [], losses: [], rest: 0 },
-    // ];
-    // const players: TestPlayer[] = [
-    //     { name: 'Alexander', strength: 4, wins: [], losses: [], rest: 0 },
-    //     { name: 'Cronblad', strength: 5, wins: [], losses: [], rest: 0 },
-    //     { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
-    //     { name: 'Jonna', strength: 1, wins: [], losses: [], rest: 0 },
-    //     { name: 'Viktoria', strength: 2, wins: [], losses: [], rest: 0 },
-    // ];
+export async function initLadder({ competition }: InitLadderArgs) {
 
-    // const players: TestPlayer[] = [
-    //     { name: 'Kent', strength: 3, wins: [], losses: [], rest: 0 },
-    //     { name: 'Alex', strength: 2, wins: [], losses: [], rest: 0 },
-    //     { name: 'Ledin', strength: 1, wins: [], losses: [], rest: 0 },
-    //     { name: 'Johan', strength: 1.5, wins: [], losses: [], rest: 0 },
-    // ];
-
-    
-    // async (p1, p2) => players.indexOf(p1) < players.indexOf(p2) ? p1 : p2
-    
-    // const names = [
-    //     'Kent',
-    //     'Alex',
-    //     'Johan',
-    //     'Ledin'
-    // ];
-    // const players: Player[] = names.map(name => ({ name, wins: [], losses: [], rest: 0 }));
- 
-    // let shuffledPlayers = [...players] as Player[]; //shuffle(players);
-    const settledMatches: SettledMatch[] = [];
-    // await playBuildAndDraw(shuffledPlayers, settledMatches);
-    
-    // await new Promise(r => { setTimeout(r, 1000); });
-    const shuffledPlayers = [...playerNames].map(name => ({
+    const shuffledPlayers = [...competition.playerNames].map(name => ({
         name: name,
         wins: [],
         losses: [],
         rest: 0
     }));
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
-    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[5] });
-    // settledMatches.push({ winner: shuffledPlayers[6], loser: shuffledPlayers[7] });
-    // settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[7] });
-    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
-    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[6] });
-    // settledMatches.push({ winner: shuffledPlayers[5], loser: shuffledPlayers[0] });
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[6] }); // 2
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[5] });
-    // settledMatches.push({ winner: shuffledPlayers[4], loser: shuffledPlayers[1] }); // 3
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[1] }); // 4 and 2
-    // settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[4] }); // 5
-
-    /**
-     * 0 Alex
-       1 Cronblad
-       2 Viktoria
-       3 Kent
-       4 Jonna
-     */
-    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
-    settledMatches.push({ winner: shuffledPlayers[3], loser: shuffledPlayers[2] });
-    settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[4] });
-    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[2] });
-    settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[4] });
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[3] });
-    // settledMatches.push({ winner: shuffledPlayers[0], loser: shuffledPlayers[3] });
-    // settledMatches.push({ winner: shuffledPlayers[1], loser: shuffledPlayers[0] });
-
-    initPlay(shuffledPlayers, settledMatches);
+    const settledMatches: SettledMatch[] = competition.settledMatchNames.map(settledMatchName => {
+        const winner = shuffledPlayers.find(p => p.name === settledMatchName.winner);
+        if (!winner) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.winner}`);
+        const loser = shuffledPlayers.find(p => p.name === settledMatchName.loser);
+        if (!loser) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.winner}`);
+        
+        return {
+            winner,
+            loser
+        };
+    });
+    
+    initPlay(competition, shuffledPlayers, settledMatches);
 }
 
-async function initPlay(players: Player[], settledMatches: SettledMatch[]) {
+async function initPlay(competition: Competition, players: Player[], settledMatches: SettledMatch[]) {
 
     function onMatchResult(winner?: Player, loser?: Player) {
         // match result callback, recalc everything
         if (!winner || !loser) throw new Error('No winner or loser');
         settledMatches.push({ winner, loser });
+        updateCurrentCompetition({ competition, players, settledMatches });
         resetPlayers(players);
-        initPlay(players, settledMatches);
+        initPlay(competition, players, settledMatches);
     }
 
     const matchResults = await playBuildAndDraw(players, settledMatches, onMatchResult);
@@ -112,6 +52,18 @@ async function initPlay(players: Player[], settledMatches: SettledMatch[]) {
     writeStatus({ players, matchResults, onMatchResult });
     writePlayerStats(players);
     writePlayerStatsTable(players);
+}
+
+function updateCurrentCompetition(args: { competition: Competition, players: Player[], settledMatches: SettledMatch[] }) {
+
+    const { competition, players, settledMatches} = args;
+
+    if (players)
+        competition.playerNames = players.map(p => p.name);
+    if (settledMatches)
+        competition.settledMatchNames = settledMatches.map(m => ({ winner: m.winner.name, loser: m.loser.name }));
+
+    updateCompetition(competition.id, competition);
 }
 
 function resetPlayers(players: Player[]): void {
