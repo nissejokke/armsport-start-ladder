@@ -52,7 +52,7 @@ async function initPlay(competition: Competition, players: Player[], settledMatc
 
     writeStatus({ players, matchResults, onMatchResult });
     writePlayerStats(players);
-    writePlayerStatsTable(players);
+    writePlayerStatsTable(players, matchResults);
 }
 
 function updateCurrentCompetition(args: { competition: Competition, players: Player[], settledMatches: SettledMatch[] }) {
@@ -274,7 +274,7 @@ function writeStatus({
                 list.appendChild(li);
             }
 
-            document.querySelector('#status p')!.textContent = 'Preliminary matches after that:';
+            document.querySelector('#status p')!.textContent = 'Preliminary matches after:';
         }
     }
     else {
@@ -282,7 +282,7 @@ function writeStatus({
     }
 }
 
-function writePlayerStatsTable(players: Player[]) {
+function writePlayerStatsTable(players: Player[], matchResults: MatchResult[]) {
     const tableBody = document.querySelector('#result table tbody')!;
     while (tableBody.childNodes.length)
         tableBody.removeChild(tableBody.childNodes[0]);
@@ -300,8 +300,14 @@ function writePlayerStatsTable(players: Player[]) {
             return -1;
         return b.wins.length * 2 - b.losses.length - (a.wins.length * 2 - a.losses.length);
     });
+    const playersSortedOnMatches = getPlayersFromMatchResults(matchResults);
 
-    for (const player of playersSortedOnScore) {
+    const fewPlayers = players.filter(p => isPlayerStillIn(p)).length < 3;
+
+    // players sorted on matches is more accurate when few matches left
+    const playerDrawOrder = fewPlayers ? playersSortedOnMatches : playersSortedOnScore;
+
+    for (const player of playerDrawOrder) {
         const tr = document.createElement('tr');
         appendTd(tr, player.name);
         appendTd(tr, player.wins.length);
@@ -316,4 +322,19 @@ function writePlayerStatsTable(players: Player[]) {
 
 function isPlayerStillIn(player: Player): boolean {
     return player.losses.length < 2;
+}
+
+function getPlayersFromMatchResults(matchResults: MatchResult[]): Player[] {
+    const players: Player[] = [];
+    for (let i = matchResults.length - 1; i >= 0; i--) {
+        if (matchResults[i]?.winner && !players.includes(matchResults[i].winner!))
+            players.push(matchResults[i]?.winner!);
+        const p1 = matchResults[i]?.players?.[0];
+        const p2 = matchResults[i]?.players?.[1];
+        if (p1 && !players.includes(p1))
+            players.push(p1);
+        if (p2 && !players.includes(p2))
+            players.push(p2);
+    }
+    return players;
 }
