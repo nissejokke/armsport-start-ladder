@@ -184,8 +184,9 @@ function drawMatchResults(result: MatchResult) {
     const log = document.querySelector('#log')!;
     const entry = document.createElement('div');
 
+    entry.appendChild(document.createTextNode((log.childNodes.length + 1) + '. '));
     if (result.winner === result.players?.[0]) {
-        bold.innerText = (log.childNodes.length + 1) + '. ' + result.players?.[0].name ?? '?';
+        bold.innerText = result.players?.[0].name ?? '?';
         light.innerText = result.players?.[1].name ?? '?';
         entry.appendChild(bold);
         entry.appendChild(vs);
@@ -193,7 +194,7 @@ function drawMatchResults(result: MatchResult) {
         
     }
     else if (result.winner === result.players?.[1]) {
-        light.innerText = (log.childNodes.length + 1) + '. ' + result.players?.[0].name ?? '?';
+        light.innerText = result.players?.[0].name ?? '?';
         bold.innerText = result.players?.[1].name ?? '?';
         entry.appendChild(light);
         entry.appendChild(vs);
