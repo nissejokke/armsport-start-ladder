@@ -15,12 +15,11 @@ export function buildTree(results: MatchResult[]): { rootNode: TreeNode<MatchRes
     for (i = 1; i < results.length; i++) {
         const result = results[i];
         if (!result) { break };
-        console.log(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name);
+        // console.log(result.players?.[0].name  + ' vs ' + result.players?.[1].name + ' = ' + result.winner?.name);
         const foundNodes = searchTree(root, (node) => {
             if (!result.winner) return false;
             return node.data.players!.includes(result.winner);
         });
-        console.log(foundNodes);
         if (foundNodes.length === 0) {
             console.log('No nodes found, was searching for ' + result.winner?.name + ' or ' + result.loser?.name + ' in tree');
             continue;
@@ -28,7 +27,6 @@ export function buildTree(results: MatchResult[]): { rootNode: TreeNode<MatchRes
         appendTree(result, foundNodes[0]); // first leave should be children rather than parent
         resultsUsed.push(result);
 
-        console.log('tree (#' + i + ')');
         printTree(root, (node) => node.data.players!.map(p => p.name).join(' vs '));
     }
 

@@ -1,6 +1,6 @@
 import { buildAndDrawTrees } from "./build-and-draw-tree";
 import { MatchResult, Player, play, playersNotPlaying, writePlayerStats } from "./play";
-import { Competition, getCompetition, updateCompetition } from "./store";
+import { Competition, updateCompetition } from "./store";
 
 interface SettledMatch {
     winner: Player;
@@ -25,7 +25,7 @@ export async function initLadder({ competition }: InitLadderArgs) {
         const winner = shuffledPlayers.find(p => p.name === settledMatchName.winner);
         if (!winner) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.winner}`);
         const loser = shuffledPlayers.find(p => p.name === settledMatchName.loser);
-        if (!loser) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.winner}`);
+        if (!loser) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.loser}`);
         
         return {
             winner,
@@ -39,9 +39,10 @@ export async function initLadder({ competition }: InitLadderArgs) {
 async function initPlay(competition: Competition, players: Player[], settledMatches: SettledMatch[]) {
 
     function onMatchResult(winner?: Player, loser?: Player) {
+        // this function can be called both without winner and loser, in that case just redraw
         // match result callback, recalc everything
-        if (!winner || !loser) throw new Error('No winner or loser');
-        settledMatches.push({ winner, loser });
+        if (winner && loser)
+            settledMatches.push({ winner, loser });
         updateCurrentCompetition({ competition, players, settledMatches });
         resetPlayers(players);
         initPlay(competition, players, settledMatches);
@@ -56,7 +57,7 @@ async function initPlay(competition: Competition, players: Player[], settledMatc
 
 function updateCurrentCompetition(args: { competition: Competition, players: Player[], settledMatches: SettledMatch[] }) {
 
-    const { competition, players, settledMatches} = args;
+    const { competition, players, settledMatches } = args;
 
     if (players)
         competition.playerNames = players.map(p => p.name);
@@ -94,17 +95,29 @@ async function playBuildAndDraw(
     let settledMatchesPool = [...settledMatches];
 
     async function determineWinner(p1: Player, p2: Player): Promise<Player | undefined> {
-        const p1Winner = settledMatchesPool.find(sm => sm.winner === p1 && sm.loser === p2);
-        if (p1Winner) {
+        const sm = settledMatchesPool[0];
+        // commented lines are to enabled plays other then the exakt order that is determined
+        // however can be issues with that so keeping it simple for now
+
+        // const indexOfFirstMatchWherePlayersHaveMet = settledMatchesPool.findIndex(s => (s.winner === p1 && s.loser === p2) || (s.winner === p2 && s.loser === p1));
+        // if (indexOfFirstMatchWherePlayersHaveMet === -1)
+        //     return undefined;
+        // const settledMatchesSelection = settledMatchesPool.slice(0, indexOfFirstMatchWherePlayersHaveMet + 1);
+        if (sm && sm.winner === p1 && sm.loser === p2) {
+        // const p1Winner = settledMatchesSelection.find(sm => sm.winner === p1 && sm.loser === p2);
+        // if (p1Winner) {
             const lenBefore = settledMatchesPool.length;
-            settledMatchesPool = settledMatchesPool.filter(sm => sm !== p1Winner);
+            settledMatchesPool.shift();
+            // settledMatchesPool = settledMatchesPool.filter(sm => sm !== p1Winner);
             if (lenBefore - 1 !== settledMatchesPool.length) throw new Error('Should only remove one settled match');
             return p1;
         }
-        const p2Winner = settledMatchesPool.find(sm => sm.winner === p2 && sm.loser === p1);
-        if (p2Winner) {
+        // const p2Winner = settledMatchesSelection.find(sm => sm.winner === p2 && sm.loser === p1);
+        // if (p2Winner) {
+        if (sm && sm.winner === p2 && sm.loser === p1) {
             const lenBefore = settledMatchesPool.length;
-            settledMatchesPool = settledMatchesPool.filter(sm => sm !== p2Winner);
+            // settledMatchesPool = settledMatchesPool.filter(sm => sm !== p2Winner);
+            settledMatchesPool.shift();
             if (lenBefore - 1 !== settledMatchesPool.length) throw new Error('Should only remove one settled match');
             return p2;
         }
@@ -126,13 +139,30 @@ async function playBuildAndDraw(
         i++;
     } while (playersNotPlaying(players).length && !result.finished && i < 10000);
 
-    console.log(results);
+    addRemoveLastMatchButton(settledMatches, onMatchResult);
 
     const filteredResults = [...results].reverse();
 
-    buildAndDrawTrees(filteredResults, players, ctx, onMatchResult);
+    buildAndDrawTrees(filteredResults, getNextUpMatches(results)[0], players, ctx, onMatchResult);
 
     return results;
+}
+
+/**
+ * Adds remove settled match button to last played match in match log
+ */
+function addRemoveLastMatchButton(settledMatches: SettledMatch[], onMatchResult: MatchResultCallback) {
+    const entry = document.querySelector('#log div:last-child');
+    if (entry) {
+        const btnRemove = document.createElement('button');
+        btnRemove.innerText = 'Undo';
+        btnRemove.onclick = () => {
+            settledMatches.pop();
+            onMatchResult();
+        };
+        entry.appendChild(document.createTextNode(' '));
+        entry.appendChild(btnRemove);
+    }
 }
 
 function createCanvas(parent: Element) {
@@ -145,13 +175,38 @@ function createCanvas(parent: Element) {
 }
 
 function drawMatchResults(result: MatchResult) {
-    drawMatchResult(result.players?.[0].name  + ' vs ' + result.players?.[1]?.name + ', winner: ' + (result.winner?.name ?? '?'));
+    const light = document.createElement('span');
+    const bold = document.createElement('span');
+    bold.classList.add('bold');
+    
+    const vs = document.createElement('span');
+    vs.innerText = ' vs ';
+    const log = document.querySelector('#log')!;
+    const entry = document.createElement('div');
+
+    if (result.winner === result.players?.[0]) {
+        bold.innerText = (log.childNodes.length + 1) + '. ' + result.players?.[0].name ?? '?';
+        light.innerText = result.players?.[1].name ?? '?';
+        entry.appendChild(bold);
+        entry.appendChild(vs);
+        entry.appendChild(light);
+        
+    }
+    else if (result.winner === result.players?.[1]) {
+        light.innerText = (log.childNodes.length + 1) + '. ' + result.players?.[0].name ?? '?';
+        bold.innerText = result.players?.[1].name ?? '?';
+        entry.appendChild(light);
+        entry.appendChild(vs);
+        entry.appendChild(bold);
+    }
+    else throw new Error();
+
+    log.appendChild(entry);
 }
 
-function drawMatchResult(text: string) {
-    const div = document.createElement('div');
-    div.innerText = text;
-    document.querySelector('#log')!.appendChild(div);
+function getNextUpMatches(matchResults: MatchResult[]): MatchResult[] {
+    const nextUp = matchResults.filter(r => !r.winner && r.players?.filter(isPlayerStillIn).length === 2);
+    return nextUp;
 }
 
 function writeStatus({ 
@@ -168,13 +223,20 @@ function writeStatus({
         list.removeChild(list.childNodes[0]);
     document.querySelector('#status p')!.textContent = '';
 
-    const nextUp = matchResults.filter(r => !r.winner && r.players?.filter(isPlayerStillIn).length === 2);
+    const nextUp = getNextUpMatches(matchResults);
     if (nextUp.length) {
+        const [first] = nextUp;
         const playerLeft = players.filter(isPlayerStillIn).length;
+        const playBetweenPlayersThatHaventLostAnyMatch = first.players?.filter(p => p.losses.length === 0).length === 2;
         let label = '';
         switch (playerLeft) {
             case 2: label = 'Final '; break;
-            case 3: label = 'Semi-final '; break;
+            case 3: 
+                if (playBetweenPlayersThatHaventLostAnyMatch) 
+                    label = 'Elimination to final ';
+                else
+                    label = 'Semi-final '; 
+                break;
             default:
                 label = '';
                 break;
@@ -186,9 +248,9 @@ function writeStatus({
         text.appendChild(lbl);
 
         const name1 = document.createElement('span');
-        name1.textContent = nextUp[0].players![0].name;
+        name1.textContent = first.players![0].name;
         name1.onclick = () => {
-            onMatchResult(nextUp[0].players![0], nextUp[0].players![1]);
+            onMatchResult(first.players![0], first.players![1]);
         };
         name1.classList.add('player', 'link');
         text.appendChild(name1);
@@ -198,9 +260,9 @@ function writeStatus({
         text.appendChild(separator);
         
         const name2 = document.createElement('span');
-        name2.textContent = nextUp[0].players![1].name;
+        name2.textContent = first.players![1].name;
         name2.onclick = () => {
-            onMatchResult(nextUp[0].players![1], nextUp[0].players![0]);
+            onMatchResult(first.players![1], first.players![0]);
         };
         name2.classList.add('player', 'link');
         text.appendChild(name2);
@@ -238,6 +300,7 @@ function writePlayerStatsTable(players: Player[]) {
             return -1;
         return b.wins.length * 2 - b.losses.length - (a.wins.length * 2 - a.losses.length);
     });
+
     for (const player of playersSortedOnScore) {
         const tr = document.createElement('tr');
         appendTd(tr, player.name);

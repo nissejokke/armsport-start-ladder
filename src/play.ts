@@ -23,7 +23,7 @@ export interface PlayerStats {
 export async function play(
     players: Player[], 
     chooseWinner: (p1: Player, p2: Player) => Promise<Player | undefined>
-): Promise<MatchResult> {
+): Promise<MatchResult> {    
     const p1 = pick(players);
     if (!p1) {
         console.log('No winner!?');
@@ -80,15 +80,25 @@ export function playersNotPlaying(players: Player[]): Player[] {
 }
 
 function pick(players: Player[], versus?: Player): Player {
-    // const playersInGroupA = players.filter(p => p.losses.length === 0).length;
     const playersWithNoMatch = players.filter(p => p.wins.length + p.losses.length === 0).length;
     const debug = false;
-
+    
     let winnerGroup: boolean | undefined = undefined;
     if (playersWithNoMatch) {
         winnerGroup = true;
     }
+    if (!playersWithNoMatch) {
+        // choose group where there isn't just one player left
+        // an example of why this is needed is when winner group has one undefeated player left
+        // in this case the loser group must be finished first
+        const playersInWinnerGroup = players.filter(p => !p.isPlaying && p.wins.length > 0 && p.losses.length === 0).length;
+        const playersStillInLoserGroup = players.filter(p => !p.isPlaying && p.losses.length === 1).length;
 
+        if (playersInWinnerGroup === 1 && playersStillInLoserGroup > 1)
+            winnerGroup = false;
+        else if (playersInWinnerGroup > 1 && playersStillInLoserGroup === 1)
+            winnerGroup = true;
+    }
     let firstSelectPlayers = [...players]
         .filter(p => !p.isPlaying)
         .filter(p => versus ? p !== versus : true)
@@ -108,14 +118,8 @@ function pick(players: Player[], versus?: Player): Player {
         .sort((a, b) => {
             // todo not the same team if can be avoided
             
-            if (playersWithNoMatch) {
-                // console.log('*', a.name, b.name)
-            }
             const aMatchCount = a.wins.length + a.losses.length;
             const bMatchCount = b.wins.length + b.losses.length;
-
-            const aHasLosses = Boolean(a.losses.length);
-            const bHasLosses = Boolean(b.losses.length);
             
             // least matches
             const matchDiff = aMatchCount - bMatchCount;

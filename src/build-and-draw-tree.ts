@@ -4,7 +4,7 @@ import { MatchResult, Player } from "./play";
 import { TreeNode } from "./tree";
 import { TreeCanvas } from "./tree-canvas";
 
-export function buildAndDrawTrees(results: MatchResult[], players: Player[], ctx: CanvasRenderingContext2D, onMatchResult: (winner?: Player, loser?: Player) => void) {
+export function buildAndDrawTrees(results: MatchResult[], nextUp: MatchResult | undefined, players: Player[], ctx: CanvasRenderingContext2D, onMatchResult: (winner?: Player, loser?: Player) => void) {
     let filteredResults = [...results];
     let allResultsUsed: MatchResult[] = [];
     const canvas = new TreeCanvas(ctx);
@@ -13,7 +13,6 @@ export function buildAndDrawTrees(results: MatchResult[], players: Player[], ctx
     do {
         const { rootNode, resultsUsed } = buildTree(filteredResults);
         allResultsUsed.push(...resultsUsed);
-        console.log(resultsUsed);
         drawTreeNodes.push(rootNode);
         filteredResults = filteredResults.filter(r => !allResultsUsed.includes(r));
     } while (filteredResults.length);
@@ -21,7 +20,7 @@ export function buildAndDrawTrees(results: MatchResult[], players: Player[], ctx
     let treeYPos = 0;
     let treeIndex = 0;
     for (const rootNode of drawTreeNodes.sort(createSortTreesFunction(players))) {
-        const { treeHeight } = drawTree({ node: rootNode, treeY: treeYPos, treeIndex, canvas, onMatchResult });
+        const { treeHeight } = drawTree({ node: rootNode, treeY: treeYPos, treeIndex, canvas, onMatchResult, nextUp });
         treeYPos += treeHeight;
         treeIndex++;
     }
@@ -32,13 +31,15 @@ function createSortTreesFunction(players: Player[]) {
         const aPlayers = getAllPlayers(a);
         const bPlayers = getAllPlayers(b);
 
-        // const aNoLosses = aPlayers.find(p => p.player.losses.length === 0 && p.player.wins.length);
-        // const bNoLosses = bPlayers.find(p => p.player.losses.length === 0 && p.player.wins.length);
+        // makes sure winner pool is drawn first
+        const aNoLosses = aPlayers.find(p => p.player.losses.length === 0 && p.player.wins.length);
+        const bNoLosses = bPlayers.find(p => p.player.losses.length === 0 && p.player.wins.length);
 
-        // if (aNoLosses && !bNoLosses)
-        //     return -1;
-        // if (bNoLosses && !aNoLosses)
-        //     return 1;
+        if (aNoLosses && !bNoLosses)
+            return -1;
+        if (bNoLosses && !aNoLosses)
+            return 1;
+        // end make sure winner pool is drawn first
 
         // if (aNoLosses && bNoLosses) {
         //     const depthDiff = -aNoLosses.depth + bNoLosses.depth;

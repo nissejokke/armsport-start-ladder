@@ -1,5 +1,6 @@
-import { assertEquals, assertStrictEquals } from "https://deno.land/std@0.192.0/testing/asserts.ts";
+import { assertEquals, assertStrictEquals, assertNotEquals } from "https://deno.land/std@0.192.0/testing/asserts.ts";
 import { MatchResult, Player, play, playerStats, writePlayerStats } from "./play.ts";
+import { Competition } from "./store.ts";
 
 export interface TestPlayer extends Player {
     strength: number;
@@ -210,4 +211,92 @@ Deno.test("five players, losers should meet other loser and winner should meet o
 
     // console.log(result.players?.[0].name, 'vs', result.players?.[1].name, '=>', result.winner?.name);
 
+});
+
+Deno.test("loser group should finish first", async () => {
+    // scenario where Kent is undefeated but is meeting from loser group which is not finished
+
+    const competition: Competition = 
+        {
+          "id": "1",
+          "created": "2023-07-14T09:34:22.912Z",
+          "playerNames": [
+            "Alex",
+            "Cronblad",
+            "Viktoria",
+            "Kent Andersson",
+            "Jonna"
+          ],
+          "settledMatchNames": [
+            {
+              "winner": "Cronblad",
+              "loser": "Alex"
+            },
+            {
+              "winner": "Kent Andersson",
+              "loser": "Viktoria"
+            },
+            {
+              "winner": "Cronblad",
+              "loser": "Jonna"
+            },
+            {
+              "winner": "Alex",
+              "loser": "Viktoria"
+            },
+            {
+              "winner": "Kent Andersson",
+              "loser": "Cronblad"
+            },
+            {
+              "winner": "Alex",
+              "loser": "Jonna"
+            }
+          ]
+        };
+
+    const players = [...competition.playerNames].map(name => ({
+        name: name,
+        wins: [],
+        losses: [],
+        rest: 0
+    }));
+    let settledMatches = competition.settledMatchNames.map(settledMatchName => {
+        const winner = players.find(p => p.name === settledMatchName.winner);
+        if (!winner) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.winner}`);
+        const loser = players.find(p => p.name === settledMatchName.loser);
+        if (!loser) throw new Error(`Save state invalid, cannot find player with name ${settledMatchName.loser}`);
+
+        return {
+            winner,
+            loser
+        };
+    });
+
+    let wi = 0;
+    async function chooseWinner(p1: Player, p2: Player): Promise<Player | undefined> {
+        const p1Winner = settledMatches.find(sm => sm.winner === p1 && sm.loser === p2);
+        if (p1Winner) {
+            const lenBefore = settledMatches.length;
+            settledMatches = settledMatches.filter(sm => sm !== p1Winner);
+            if (lenBefore - 1 !== settledMatches.length) throw new Error('Should only remove one settled match');
+            return p1;
+        }
+        const p2Winner = settledMatches.find(sm => sm.winner === p2 && sm.loser === p1);
+        if (p2Winner) {
+            const lenBefore = settledMatches.length;
+            settledMatches = settledMatches.filter(sm => sm !== p2Winner);
+            if (lenBefore - 1 !== settledMatches.length) throw new Error('Should only remove one settled match');
+            return p2;
+        }
+    }
+
+    let result: MatchResult;
+    for (let i = 0; i < 7; i++) {
+        result = await play(players, chooseWinner);
+        // console.log(result.players?.[0].name, 'vs', result.players?.[1].name, '=>', result.winner?.name);
+    }
+
+    assertNotEquals(result!.players![0].name, 'Kent Andersson');
+    assertNotEquals(result!.players![1].name, 'Kent Andersson');
 });
