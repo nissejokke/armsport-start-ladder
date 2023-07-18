@@ -157,18 +157,21 @@ async function playBuildAndDraw(
 function addRemoveLastMatchButton(settledMatches: SettledMatch[], onMatchResult: MatchResultCallback) {
     const entry = document.querySelector('#log div:last-child');
     if (entry) {
-        const btnRemove = document.createElement('button');
-        btnRemove.innerText = 'Undo';
-        btnRemove.onclick = () => {
+        const linkRemove = document.createElement('a');
+        linkRemove.innerText = 'Undo';
+        linkRemove.onclick = (e) => {
+            e.preventDefault();
             settledMatches.pop();
             onMatchResult();
+            return false;
         };
+        linkRemove.href = '#';
         entry.appendChild(document.createTextNode(' '));
-        entry.appendChild(btnRemove);
+        entry.appendChild(linkRemove);
     }
 }
 
-function createCanvas(parent: Element, height?: number) {
+function createCanvas(parent: Element, height?: number): CanvasRenderingContext2D {
     const canvas = document.createElement('canvas');
     parent.prepend(canvas);
     canvas.width = window.outerWidth;
