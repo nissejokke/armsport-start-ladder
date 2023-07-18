@@ -4,7 +4,13 @@ import { MatchResult, Player } from "./play";
 import { TreeNode } from "./tree";
 import { TreeCanvas } from "./tree-canvas";
 
-export function buildAndDrawTrees(results: MatchResult[], nextUp: MatchResult | undefined, players: Player[], ctx: CanvasRenderingContext2D, onMatchResult: (winner?: Player, loser?: Player) => void) {
+export function buildAndDrawTrees(
+    results: MatchResult[], 
+    nextUp: MatchResult | undefined, 
+    players: Player[], 
+    ctx: CanvasRenderingContext2D, 
+    onMatchResult: (winner?: Player, loser?: Player) => void
+): { totalHeight: number } {
     let filteredResults = [...results];
     let allResultsUsed: MatchResult[] = [];
     const canvas = new TreeCanvas(ctx);
@@ -17,13 +23,19 @@ export function buildAndDrawTrees(results: MatchResult[], nextUp: MatchResult | 
         filteredResults = filteredResults.filter(r => !allResultsUsed.includes(r));
     } while (filteredResults.length);
     
-    let treeYPos = 0;
+    let treeY = 0;
     let treeIndex = 0;
+    let lastTreeYPos = 0;
+    let lastTreeHeight = 0;
     for (const rootNode of drawTreeNodes.sort(createSortTreesFunction(players))) {
-        const { treeHeight } = drawTree({ node: rootNode, treeY: treeYPos, treeIndex, canvas, onMatchResult, nextUp });
-        treeYPos += treeHeight;
+        const { treeHeight, treeYPos } = drawTree({ node: rootNode, treeY: treeY, treeIndex, canvas, onMatchResult, nextUp });
+        treeY += treeHeight;
         treeIndex++;
+        lastTreeYPos = treeYPos;
+        lastTreeHeight = treeHeight;
     }
+
+    return { totalHeight: lastTreeYPos + lastTreeHeight };
 }
 
 function createSortTreesFunction(players: Player[]) {

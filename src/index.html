@@ -27,17 +27,12 @@
                 font-size: smaller;
             }
 
-            #canvas {
-                position: absolute;
-            }
-
             #log {
             }
 
             #ladder {
                 position: relative;
                 padding-top:5px;
-                clear: both;
             }
 
             tr.lost td {
@@ -55,7 +50,7 @@
             }
 
             #ladder {
-                overflow: scroll;
+                overflow-x: scroll;
             }
 
             #result table td {
@@ -76,6 +71,22 @@
 
             .bold {
                 font-weight: bold;
+            }
+
+            @media print {
+                #ladder {
+                    overflow: visible;
+                    zoom: 80%;
+                    page-break-before: always;
+                }
+
+                #ladder canvas {
+                    position: absolute;
+                }
+
+                button {
+                    display: none;
+                }
             }
         </style>
     </head>
@@ -203,7 +214,6 @@
             </div>
             <div class="box pure-u-1">
                 <div id="ladder">
-                    <canvas id="canvas" width="1000" height="1000"></canvas>
                 </div>
             </div>
         </div>
