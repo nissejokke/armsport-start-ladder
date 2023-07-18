@@ -298,9 +298,11 @@ function writePlayerStatsTable(players: Player[], matchResults: MatchResult[]) {
     while (tableBody.childNodes.length)
         tableBody.removeChild(tableBody.childNodes[0]);
 
-    function appendTd(tr, text) {
+    function appendTd(tr: HTMLTableRowElement, text: string | number, cssClass?: string) {
         let td = document.createElement('td');
-        td.innerText = text;
+        td.innerText = text.toString();
+        if (cssClass)
+            td.classList.add(cssClass);
         tr.appendChild(td);
     }
     
@@ -313,14 +315,41 @@ function writePlayerStatsTable(players: Player[], matchResults: MatchResult[]) {
     });
     const playersSortedOnMatches = getPlayersFromMatchResults(matchResults);
 
-    const fewPlayers = players.filter(p => isPlayerStillIn(p)).length < 3;
+    const playersLeft = players.filter(p => isPlayerStillIn(p)).length;
+    const fewPlayers = playersLeft < 3;
 
     // players sorted on matches is more accurate when few matches left
     const playerDrawOrder = fewPlayers ? playersSortedOnMatches : playersSortedOnScore;
 
+    let playerIndex = 0;
     for (const player of playerDrawOrder) {
         const tr = document.createElement('tr');
-        appendTd(tr, player.name);
+
+        let placing = '';
+        let placingCssClass: string | undefined;
+        if (playersLeft === 1) {
+            if (playerIndex === 0) {
+                placing = '1st';
+                placingCssClass = 'gold';
+            }
+            else if (playerIndex === 1) {
+                placing = '2nd';
+                placingCssClass = 'silver';
+            }
+            else if (playerIndex === 2) {
+                placing = '3rd';
+                placingCssClass = 'bronze';
+            }
+        }
+        else if (playersLeft === 2) {
+            if (playerIndex === 2) {
+                placing = '3rd';
+                placingCssClass = 'bronze';
+            }
+        }
+                
+        appendTd(tr, placing, placingCssClass);
+        appendTd(tr, player.name, !placing && !isPlayerStillIn(player) ? 'eliminated' : undefined);
         appendTd(tr, player.wins.length);
         appendTd(tr, player.losses.length);
         appendTd(tr, player.wins.length + player.losses.length);
@@ -328,6 +357,7 @@ function writePlayerStatsTable(players: Player[], matchResults: MatchResult[]) {
         if (!isPlayerStillIn(player))
             tr.classList.add('lost');
         tableBody.appendChild(tr);
+        playerIndex++;
     }
 }
 

@@ -36,9 +36,13 @@
             }
 
             tr.lost td {
+                /* background-color: #fafafa; */
+            }
+            
+            tr.lost td:nth-child(2) {
+                /* color: grey;
                 font-style: italic;
-                color: grey;
-                text-decoration: line-through;
+                text-decoration: line-through; */
             }
 
             #status .player {
@@ -71,6 +75,24 @@
 
             .bold {
                 font-weight: bold;
+            }
+
+            .gold {
+                color: #f9ad0e  !important;
+            }
+
+            .silver {
+                color: #d1d7da  !important;
+            }
+
+            .bronze {
+                color: #df7e08 !important;
+            }
+
+            .eliminated {
+                text-decoration: line-through;
+                font-style: italic;
+                color: #777;
             }
 
             @media print {
@@ -202,6 +224,7 @@
                 <div id="result">
                     <table class="pure-table pure-table-horizontal">
                         <thead>
+                            <th></th>
                             <th></th>
                             <th>Wins</th>
                             <th>Losses</th>
