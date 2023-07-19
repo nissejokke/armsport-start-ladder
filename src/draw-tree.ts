@@ -22,7 +22,7 @@ export function drawTree({
     canvas: TreeDrawing; 
     onMatchResult: (winner: Player, loser: Player) => void; 
     nextUp?: MatchResult 
-}): { treeHeight: number; treeYPos: number; } {
+}): { treeWidth: number; treeHeight: number; treeYPos: number; } {
     
     if (!node?.data) throw new Error('node data undefined');
     const depth = calcMaxDepthOfTree(node);
@@ -40,7 +40,7 @@ export function drawTree({
 
     drawTreeAtPosition(node, depth, x, y, canvas, 0, onMatchResult, nextUp);
 
-    return { treeHeight: height, treeYPos: y };
+    return { treeHeight: height, treeYPos: y, treeWidth: (depth + 2) * treeLineXLength /* approximation */ };
 }
 
 function getX(offsetX: number, depth: number) {

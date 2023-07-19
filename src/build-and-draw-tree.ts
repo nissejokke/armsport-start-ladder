@@ -10,7 +10,7 @@ export function buildAndDrawTrees(
     players: Player[], 
     ctx: CanvasRenderingContext2D, 
     onMatchResult: (winner?: Player, loser?: Player) => void
-): { totalHeight: number } {
+): { totalWidth: number; totalHeight: number } {
     let filteredResults = [...results];
     let allResultsUsed: MatchResult[] = [];
     const canvas = new TreeCanvas(ctx);
@@ -27,15 +27,17 @@ export function buildAndDrawTrees(
     let treeIndex = 0;
     let lastTreeYPos = 0;
     let lastTreeHeight = 0;
+    let maxTreeWidth = 0;
     for (const rootNode of drawTreeNodes.sort(createSortTreesFunction(players))) {
-        const { treeHeight, treeYPos } = drawTree({ node: rootNode, treeY: treeY, treeIndex, canvas, onMatchResult, nextUp });
+        const { treeWidth, treeHeight, treeYPos } = drawTree({ node: rootNode, treeY: treeY, treeIndex, canvas, onMatchResult, nextUp });
         treeY += treeHeight;
         treeIndex++;
         lastTreeYPos = treeYPos;
         lastTreeHeight = treeHeight;
+        maxTreeWidth = Math.max(maxTreeWidth, treeWidth);
     }
 
-    return { totalHeight: lastTreeYPos + lastTreeHeight };
+    return { totalWidth: maxTreeWidth, totalHeight: lastTreeYPos + lastTreeHeight };
 }
 
 function createSortTreesFunction(players: Player[]) {

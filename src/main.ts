@@ -14,6 +14,7 @@ export interface InitLadderArgs {
 export type MatchResultCallback = (winner?: Player, loser?: Player) => void;
 
 let canvasHeight;
+let canvasWidth;
 
 export async function initLadder({ competition }: InitLadderArgs) {
 
@@ -92,7 +93,7 @@ async function playBuildAndDraw(
     while (log.childNodes.length)
         log.removeChild(log.childNodes[0]);
     
-    const ctx = createCanvas(ladder, canvasHeight);
+    const ctx = createCanvas(ladder, canvasWidth, canvasHeight);
 
     let settledMatchesPool = [...settledMatches];
 
@@ -145,8 +146,11 @@ async function playBuildAndDraw(
 
     const filteredResults = [...results].reverse();
 
-    const { totalHeight } = buildAndDrawTrees(filteredResults, getNextUpMatches(results)[0], players, ctx, onMatchResult);
+    const { totalWidth, totalHeight } = buildAndDrawTrees(filteredResults, getNextUpMatches(results)[0], players, ctx, onMatchResult);
+    // this is not great
+    // sets canvas width and height after render
     canvasHeight = totalHeight * 1.5;
+    canvasWidth = totalWidth;
 
     return results;
 }
@@ -171,10 +175,13 @@ function addRemoveLastMatchButton(settledMatches: SettledMatch[], onMatchResult:
     }
 }
 
-function createCanvas(parent: Element, height?: number): CanvasRenderingContext2D {
+function createCanvas(parent: Element, width?: number, height?: number): CanvasRenderingContext2D {
     const canvas = document.createElement('canvas');
     parent.prepend(canvas);
-    canvas.width = window.outerWidth;
+    if (width)
+        canvas.width = width;
+    else
+        canvas.width = window.outerWidth * 3;
     if (height)
         canvas.height = height;
     else
