@@ -16,7 +16,7 @@ export type MatchResultCallback = (winner?: Player, loser?: Player) => void;
 let canvasHeight;
 let canvasWidth;
 
-export async function initLadder({ competition }: InitLadderArgs) {
+export async function initLadder({ competition }: InitLadderArgs): Promise<{ competitionFinished: boolean; }> {
 
     const shuffledPlayers = [...competition.playerNames].map(name => ({
         name: name,
@@ -36,10 +36,10 @@ export async function initLadder({ competition }: InitLadderArgs) {
         };
     });
     
-    initPlay(competition, shuffledPlayers, settledMatches);
+    return await initPlay(competition, shuffledPlayers, settledMatches);
 }
 
-async function initPlay(competition: Competition, players: Player[], settledMatches: SettledMatch[]) {
+async function initPlay(competition: Competition, players: Player[], settledMatches: SettledMatch[]): Promise<{ competitionFinished: boolean; }> {
 
     function onMatchResult(winner?: Player, loser?: Player) {
         // this function can be called both without winner and loser, in that case just redraw
@@ -53,9 +53,10 @@ async function initPlay(competition: Competition, players: Player[], settledMatc
 
     const matchResults = await playBuildAndDraw(players, settledMatches, onMatchResult);
 
-    writeStatus({ players, matchResults, onMatchResult });
+    const result = writeStatus({ players, matchResults, onMatchResult });
     writePlayerStats(players);
     writePlayerStatsTable(players, matchResults);
+    return result;
 }
 
 function updateCurrentCompetition(args: { competition: Competition, players: Player[], settledMatches: SettledMatch[] }) {
@@ -233,7 +234,7 @@ function writeStatus({
     players: Player[], 
     matchResults: MatchResult[], 
     onMatchResult: MatchResultCallback 
-}) {
+}): { competitionFinished: boolean; } {
     const text = document.querySelector('#status #text')!;
     text.textContent = '';
     const list = document.querySelector('#status ul')!;
@@ -294,9 +295,11 @@ function writeStatus({
 
             document.querySelector('#status p')!.textContent = 'Preliminary matches after:';
         }
+        return { competitionFinished: false };
     }
     else {
         text.textContent = 'Winner: ' + players.find(p => p.losses.length < 2)?.name ?? '';
+        return { competitionFinished: true };
     }
 }
 

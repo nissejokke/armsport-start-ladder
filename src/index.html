@@ -124,15 +124,18 @@
             import { newCompetition, getCompetition } from './src/dist/store.js';
 
             const txtPlayers = document.querySelector('#txtPlayers');
+            let competitionFinished;
             
             function txtToPlayerNames(value) {
                 return value.split(/\n/g).map(val => val.trim()).filter(Boolean);
             }
             
-            function start(competition) {
+            async function start(competition) {
                 document.querySelector('form').style.display = 'none';
-                if (competition)
-                    initLadder({ competition });
+                let result;
+                if (competition) {
+                    result = await initLadder({ competition });
+                }
                 else {
                     const playerNames = txtToPlayerNames(txtPlayers.value);
                     const myCompetition = { 
@@ -142,9 +145,9 @@
                         settledMatchNames: []
                     };
                     newCompetition(myCompetition);
-                    initLadder({ competition: myCompetition });
+                    result = await initLadder({ competition: myCompetition });
                 }
-                
+                competitionFinished = result.competitionFinished;
             };
 
             const txtPlayersContent = localStorage.getItem('players') ?? '';
@@ -170,6 +173,7 @@
 
             const btnEdit = document.querySelector('#btnEdit');
             btnEdit.onclick = () => {
+                if (!competitionFinished && !confirm('End current competition?')) return;
                 document.querySelector('#result').style.display = 'none';
                 document.querySelector('#status').style.display = 'none';
                 document.querySelector('#ladder').style.display = 'none';
@@ -206,7 +210,7 @@
                     </fieldset>
                 </form>
                 <div class="pure-u-1">
-                    <button type="button" id="btnEdit" class="pure-button pure-button-secondary">New competition - edit teams and contestants</button>
+                    <button type="button" id="btnEdit" class="pure-button pure-button-secondary">New competition</button>
                 </div>
             </div>
             </form>
