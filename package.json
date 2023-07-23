@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib.js",
   "scripts": {
-    "build": "bun build src/main.ts src/store.ts --outdir src/dist",
+    "build": "bun build --minify src/main.ts src/store.ts --outdir src/dist",
     "dev": "bun build src/main.ts src/store.ts --outdir src/dist --watch",
     "test": "deno test"
   },

@@ -150,7 +150,7 @@ async function playBuildAndDraw(
     const { totalWidth, totalHeight } = buildAndDrawTrees(filteredResults, getNextUpMatches(results)[0], players, ctx, onMatchResult);
     // this is not great
     // sets canvas width and height after render
-    canvasHeight = totalHeight * 1.5;
+    canvasHeight = totalHeight * 2;
     canvasWidth = totalWidth;
 
     return results;
