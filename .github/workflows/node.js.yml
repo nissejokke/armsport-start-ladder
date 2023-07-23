@@ -33,7 +33,9 @@ jobs:
     
     - uses: actions/upload-artifact@v3
       with:
-        name: armsport-ladder-artifact
+        name: github-pages
         path: .output
         
-        
+    - uses: actions/deploy-pages@v2
+    
+
