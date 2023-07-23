@@ -130,7 +130,7 @@
                 return value.split(/\n/g).map(val => val.trim()).filter(Boolean);
             }
             
-            async function start(competition) {
+            async function startCompetition(competition) {
                 document.querySelector('form').style.display = 'none';
                 let result;
                 if (competition) {
@@ -150,6 +150,16 @@
                 competitionFinished = result.competitionFinished;
             };
 
+            function editCompetition() {
+                document.querySelector('#result').style.display = 'none';
+                document.querySelector('#status').style.display = 'none';
+                document.querySelector('#ladder').style.display = 'none';
+                document.querySelector('#log').style.display = 'none';
+                document.querySelector('form').style.display = 'block';
+                document.querySelectorAll('.box > h2').forEach(h2 => h2.style.display = 'none');
+                btnEdit.style.display = 'none';
+            }
+
             const txtPlayersContent = localStorage.getItem('players') ?? '';
             txtPlayers.value = txtPlayersContent;
 
@@ -162,7 +172,7 @@
                 document.querySelector('#log').style.display = 'block';
                 document.querySelectorAll('.box > h2').forEach(h2 => h2.style.display = 'block');
                 btnEdit.style.display = 'block';
-                start();
+                startCompetition();
             };
 
             const element = document.querySelector('form');
@@ -174,20 +184,14 @@
             const btnEdit = document.querySelector('#btnEdit');
             btnEdit.onclick = () => {
                 if (!competitionFinished && !confirm('End current competition?')) return;
-                document.querySelector('#result').style.display = 'none';
-                document.querySelector('#status').style.display = 'none';
-                document.querySelector('#ladder').style.display = 'none';
-                document.querySelector('#log').style.display = 'none';
-                document.querySelector('form').style.display = 'block';
-                document.querySelectorAll('.box > h2').forEach(h2 => h2.style.display = 'none');
-                btnEdit.style.display = 'none';
+                editCompetition();
             };
 
             const competition = getCompetition('1');
             if (competition)
-                start(competition);
+                startCompetition(competition);
             else
-                btnEdit.click();
+                editCompetition();
         </script>
 
         <h1>Armsport ladder</h1>
