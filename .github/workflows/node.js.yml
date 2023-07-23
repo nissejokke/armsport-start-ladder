@@ -29,12 +29,15 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
 
-    - run: mkdir .output && cp -r src/index.html src/dist .output
+    - run: mkdir _site && cp -r src/index.html src/dist _site
     
-    - uses: actions/upload-artifact@v3
-      with:
-        name: github-pages
-        path: .output
+    - name: Fix permissions
+      run: |
+        chmod -c -R +rX "_site/" | while read line; do
+          echo "::warning title=Invalid file permissions automatically fixed::$line"
+        done
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v2
         
   # Deploy job
   deploy:
