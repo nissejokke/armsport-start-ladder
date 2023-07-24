@@ -61,6 +61,10 @@
                 overflow-wrap: break-word;
             }
 
+            #result table th {
+                font-size: smaller;
+            }
+
             .link {
                 cursor: pointer;
                 font-style: italic;
@@ -95,6 +99,19 @@
                 color: #777;
             }
 
+            .box {
+                border-bottom: 5px solid #eee;
+                padding-bottom: 1em;
+            }
+
+            h1 {
+                margin: 0 0 10px 0;
+            }
+
+            h2 {
+
+            }
+
             @media print {
                 #ladder {
                     overflow: visible;
@@ -106,13 +123,9 @@
                     position: absolute;
                 }
 
-                button {
+                button, .pure-button {
                     display: none;
                 }
-            }
-
-            .box {
-                margin-bottom: 1em;
             }
         </style>
     </head>
