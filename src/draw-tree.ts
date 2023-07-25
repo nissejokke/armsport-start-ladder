@@ -51,7 +51,7 @@ function getY(offsetY: number, depth: number, treeDepth: number, childIndex: num
     // 5: treeDepth * 100 = 500
     // 8: treeDepth * treeDepth * 50 = 3200
 
-    const y = (treeDepth * 150)/Math.max(depth * depth * 0.1 + 1, 1);
+    const y = (treeDepth * 100)/Math.max(depth * depth * 0.2 + 1, 1);
     return offsetY + (childIndex !== undefined ? childIndex * y - y/2 : 0);
 }
 
@@ -95,11 +95,8 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         childIndices.push(childIndex2);
     }
     
-    // const subTreeDepth = calcMaxDepthOfTree(node);
     const rootX = getX(offsetX, depth);
     const rootY = getY(offsetY, depth, treeDepth, undefined);
-    console.log('treedepth', treeDepth, 'depth', depth, 'y', rootY);
-    console.log('max depth', calcMaxDepthOfTree(node));
     
     // line offset
     const lineXOffset = 20;
@@ -118,9 +115,17 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         // connecting line
         canvas.line(rootX-lineXOffset-lineSlope, y+lineYOffset, rootX-lineXOffset, rootY+lineYOffset);
         const isNextUpMatch = /*depth === 0 && !node.data.winner &&*/ node.data === nextUp;
+        const cssClass = ['depth-' + depth];
+        if (depth >= 4)
+            cssClass.push('depth-gte-4');
+        if (depth >= 6)
+            cssClass.push('depth-gte-6');
+        if (depth >= 7)
+            cssClass.push('depth-gte-7');
+
         canvas.drawName({ x, y, 
-            text: (node.data.players?.[playerIndex]?.name ?? '?') + ' ' + subTreeDepth + ('y=' + Math.round(y)), 
-            cssClass: [depth >= 4 ? 'depth-gte-4' : 'depth-' + depth],
+            text: (node.data.players?.[playerIndex]?.name ?? '?') /*+ ' ' + subTreeDepth + ('y=' + Math.round(y))*/, 
+            cssClass,
             onClick: isNextUpMatch ? () => {
                 if (node.data.players?.[playerIndex] && node.data.players?.[1-playerIndex])
                     onMatchResult(
@@ -141,20 +146,6 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
 
     drawPlayer(0);
     drawPlayer(1);
-        
-
-    // players Kent, Cronblad
-    // node data winner undefined
-    // children: Jonna Cronblad, Totte Kent (both winners and players)
-
-    // players Totte Cronblad
-    // children: Kent - Totte
-
-    // players Alexander Totte
-    // children: Alexander - Totte (w)
-    // corrent child index: 1
-
-    
 
     let i = 0;
     for (const childNode of node.children) {
