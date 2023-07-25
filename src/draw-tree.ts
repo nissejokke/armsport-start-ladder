@@ -6,7 +6,7 @@ export interface TreeDrawing {
     drawName: (args: { x: number, y: number, text: string, cssClass: string[], onClick?: () => void }) => void;
 }
 
-const treeLineXLength = 175;
+const treeLineXLength = 125;
 
 export function drawTree({ 
     node, 
@@ -92,9 +92,16 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         canvas.line(x-(depth+1 !== treeDepth ? lineXOffset : 10), y+lineYOffset, rootX-lineXOffset-lineSlope, y+lineYOffset);
         canvas.line(rootX-lineXOffset-lineSlope, y+lineYOffset, rootX-lineXOffset, rootY+lineYOffset);
         const isNextUpMatch = /*depth === 0 && !node.data.winner &&*/ node.data === nextUp;
+        const cssClass = ['depth-' + depth];
+        if (depth >= 4)
+            cssClass.push('depth-gte-4');
+        if (depth >= 6)
+            cssClass.push('depth-gte-6');
+        if (depth >= 7)
+            cssClass.push('depth-gte-7');
         canvas.drawName({ x, y, 
             text: node.data.players?.[playerIndex]?.name ?? '?', 
-            cssClass: [depth >= 4 ? 'depth-gte-4' : 'depth-' + depth],
+            cssClass,
             onClick: isNextUpMatch ? () => {
                 if (node.data.players?.[playerIndex] && node.data.players?.[1-playerIndex])
                     onMatchResult(
