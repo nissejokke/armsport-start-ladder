@@ -51,7 +51,7 @@ function getY(offsetY: number, depth: number, treeDepth: number, childIndex: num
     // 5: treeDepth * 100 = 500
     // 8: treeDepth * treeDepth * 50 = 3200
 
-    const y = (treeDepth * 100)/Math.max(depth * depth * 0.2 + 1, 1);
+    const y = (treeDepth * 150)/Math.max(depth * depth * 0.1 + 1, 1);
     return offsetY + (childIndex !== undefined ? childIndex * y - y/2 : 0);
 }
 
@@ -82,11 +82,12 @@ function calcWidthOfTree(node: TreeNode<MatchResult>) {
 function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offsetX: number, offsetY: number, canvas: TreeDrawing, depth: number, onMatchResult: (winner: Player, loser: Player) => void, nextUp?: MatchResult) {
     if (!node.data.players) throw new Error('No node players');
 
-    // determines if child should be placed to the left och right under parent match
+    // determines if child should be placed to the top or bottom under parent match
     // depends on order of node.data.players and which child won
     const childIndices: number[] = [];
     if (node.children.length) {
         const childIndex = node.data.players.findIndex(p => node.children[0].data.winner === p);
+        if (childIndex === -1) throw new Error('Could find player in child nodes');
         childIndices.push(childIndex);
     }
     if (node.children.length > 1) {
@@ -106,7 +107,8 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
     const lineSlope = 10;
 
     function drawPlayer(playerIndex: number) {
-        const subTreeDepth = node.children[childIndices[playerIndex]] ? calcMaxDepthOfTree(node.children[childIndices[playerIndex]]) : (depth+1 !== treeDepth ? 1 : 2);
+        let childIndex = node.children[childIndices[playerIndex]] ? childIndices[playerIndex] : 0;
+        const subTreeDepth = node.children[childIndex] ? calcMaxDepthOfTree(node.children[childIndex]) : (depth+1 !== treeDepth ? 1 : 2);
 
         let x = getX(offsetX, depth + 1);
         let y = getY(offsetY, depth + 1, subTreeDepth, playerIndex);
