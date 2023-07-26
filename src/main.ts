@@ -151,7 +151,7 @@ async function playBuildAndDraw(
     // this is not great
     // sets canvas width and height after render
     canvasHeight = totalHeight * 2;
-    canvasWidth = totalWidth;
+    canvasWidth = totalWidth * 2;
 
     return results;
 }

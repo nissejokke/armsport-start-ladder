@@ -25,7 +25,7 @@ export function drawTree({
 }): { treeWidth: number; treeHeight: number; treeYPos: number; } {
     
     if (!node?.data) throw new Error('node data undefined');
-    const depth = calcMaxDepthOfTree(node);
+    const depth = calcMaxDepthOfTree(node) - 1;
     const height = calcHeightOfTree(node);
     const treePadding = 50;
     const treeLeftMargin = 20;
@@ -33,14 +33,14 @@ export function drawTree({
     const x = calcWidthOfTree(node) + treeLeftMargin;
     // baseOffset + startPos of tree + half height of tree + padding
     const y = treeTopMargin + treeY + height/2 + treeIndex * treePadding;
-    // const subTreeDepth = calc
-    console.log('depth=', depth);
-    console.log('width=', calcWidthOfTree(node));
-    console.log('height=', height);
+
+    // console.log('depth=', depth);
+    // console.log('width=', calcWidthOfTree(node));
+    // console.log('height=', height);
 
     drawTreeAtPosition(node, depth, x, y, canvas, 0, onMatchResult, nextUp);
 
-    return { treeHeight: height, treeYPos: y, treeWidth: (depth + 2) * treeLineXLength /* approximation */ };
+    return { treeHeight: height, treeYPos: y, treeWidth: x };
 }
 
 function getX(offsetX: number, depth: number) {
@@ -48,10 +48,7 @@ function getX(offsetX: number, depth: number) {
 }
 
 function getY(offsetY: number, depth: number, treeDepth: number, childIndex: number | undefined) {
-    // 5: treeDepth * 100 = 500
-    // 8: treeDepth * treeDepth * 50 = 3200
-
-    const y = (treeDepth ** 2 * 20 + 20)/Math.max(0.5, 0.00001);
+    const y = (Math.pow(treeDepth, 2.5) * 12 + 15)/1;
     return offsetY + (childIndex !== undefined ? childIndex * y - y/2 : 0);
 }
 
@@ -66,13 +63,11 @@ function calcMaxDepthOfTree(node: TreeNode<MatchResult>, depth = 1): number {
 
 function calcHeightOfTree(node: TreeNode<MatchResult>) {
     const treeDepth = calcMaxDepthOfTree(node);
-    // let y = 0;
-    // y = getY(y, 0, treeDepth, undefined);
-    // for (let i = 1; i <= treeDepth; i++) {
-    //     y = getY(y, i, treeDepth, 0);
-    // }
-    // return -y*2;
-    return getY(0, 0, treeDepth, 1) * 2;
+    let y = 0;
+    for (let i = treeDepth; i >= 0; i--) {
+        y = getY(y, i, i, 0);
+    }
+    return -y;
 }
 
 function calcWidthOfTree(node: TreeNode<MatchResult>) {
@@ -101,17 +96,17 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
     
     // line offset
     const lineXOffset = 20;
-    const lineYOffset = 9;// treeDepth >= 5 ? 9 : 15;
+    const lineYOffset = 10; // >= 5 ? 9 : 15;
     const lineSlope = 10;
 
     function drawPlayer(playerIndex: number) {
         let subTreeDepth;
-        const childIndex = childIndices[playerIndex];
+        // find child node to use for calculating depth from player index
+        const childIndex = childIndices.findIndex(c => c === playerIndex);
         if (node.children[childIndex]) {
             subTreeDepth = calcMaxDepthOfTree(node.children[childIndex]);
         }
         else 
-            // subTreeDepth = calcMaxDepthOfTree(node.children[0]);
             subTreeDepth = 0;
 
         let x = getX(offsetX, depth + 1);
@@ -121,7 +116,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
         canvas.line(x-(subTreeDepth !== 0 ? lineXOffset : 10), y+lineYOffset, rootX-lineXOffset-lineSlope, y+lineYOffset);
         // connecting line
         canvas.line(rootX-lineXOffset-lineSlope, y+lineYOffset, rootX-lineXOffset, rootY+lineYOffset);
-        const isNextUpMatch = /*depth === 0 && !node.data.winner &&*/ node.data === nextUp;
+        const isNextUpMatch = node.data === nextUp;
         const cssClass = ['depth-' + depth];
         if (depth >= 4)
             cssClass.push('depth-gte-4');
@@ -131,7 +126,7 @@ function drawTreeAtPosition(node: TreeNode<MatchResult>, treeDepth: number, offs
             cssClass.push('depth-gte-7');
 
         canvas.drawName({ x, y, 
-            text: (node.data.players?.[playerIndex]?.name ?? '?') + ' ' + subTreeDepth, 
+            text: (node.data.players?.[playerIndex]?.name ?? '?') /*+ ' ' + subTreeDepth*/, 
             cssClass,
             onClick: isNextUpMatch ? () => {
                 if (node.data.players?.[playerIndex] && node.data.players?.[1-playerIndex])
