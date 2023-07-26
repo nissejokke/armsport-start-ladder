@@ -151,7 +151,7 @@ async function playBuildAndDraw(
     // this is not great
     // sets canvas width and height after render
     canvasHeight = totalHeight * 2;
-    canvasWidth = totalWidth;
+    canvasWidth = totalWidth * 2;
 
     return results;
 }
@@ -186,7 +186,7 @@ function createCanvas(parent: Element, width?: number, height?: number): CanvasR
     if (height)
         canvas.height = height;
     else
-        canvas.height = window.outerHeight * 2;
+        canvas.height = window.outerHeight * 10;
 
     const ctx = canvas.getContext('2d')!;
     return ctx;
