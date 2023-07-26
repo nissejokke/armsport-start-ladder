@@ -30,7 +30,7 @@ Deno.test('simplest tree - depth 1', () => {
         args: [
             {
                 x: 145,
-                y: 51.66666666666667,
+                y: 31,
                 text: "?",
                 cssClass: [],
             },
