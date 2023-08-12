@@ -130,9 +130,9 @@ function pick(players: Player[], versus?: Player): Player {
             
             const aScore = a.wins.length - a.losses.length;
             const bScore = b.wins.length - b.losses.length;
-            const scoreDiff = aScore - bScore;
+            const scoreDiff = bScore - aScore;
 
-            // lowest score
+            // highest score first so that winner group plays another round before loser group starts
             if (scoreDiff !== 0) {
                 if (debug) console.log('=', scoreDiff, '(score)');
                 return scoreDiff;
@@ -165,13 +165,14 @@ export function playerStats(players: Player[]): PlayerStats[] {
 
 export function writePlayerStats(players: Player[]): void {
     const nameMaxLength = Math.max(...players.map(p => p.name.length));
-    console.log(''.padEnd(nameMaxLength, ' '), ' w', ' l', ' #');
+    console.log(''.padEnd(nameMaxLength, ' '), ' w', ' l', ' #', ' r');
     for (const player of players) {
         console.log(
             player.name.padEnd(nameMaxLength, ' '), 
             player.wins.length.toString().padStart(2, ' '), 
             player.losses.length.toString().padStart(2, ' '), 
-            (player.wins.length + player.losses.length).toString().padStart(2, ' ')
+            (player.wins.length + player.losses.length).toString().padStart(2, ' '),
+            player.rest.toString().padStart(2, ' ')
         );
     }
 }

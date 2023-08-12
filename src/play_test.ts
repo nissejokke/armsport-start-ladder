@@ -52,8 +52,8 @@ Deno.test("four players", async () => {
     assertEquals(results.map(r => r.winner?.name), [
         players[0].name,
         players[3].name,
-        players[1].name,
         players[0].name,
+        players[1].name,
         players[1].name,
         players[0].name,
         players[0].name
@@ -94,30 +94,30 @@ Deno.test("five players", async () => {
 
     assertEquals(results[results.length - 1].winner?.name, players[1].name);
     assertEquals(playerStats(players), [{
-            wins: 3,
-            losses: 2,
-            matches: 5
-        },
-        {
-            losses: 0,
-            matches: 4,
-            wins: 4,
-        },
-        {
-            losses: 2,
-            matches: 3,
-            wins: 1,
-        },
-        {
-            losses: 2,
-            matches: 2,
-            wins: 0,
-        },
-        {
-            losses: 2,
-            matches: 2,
-            wins: 0,
-        }
+        wins: 2,
+        losses: 2,
+        matches: 4
+    },
+    {
+        losses: 0,
+        matches: 4,
+        wins: 4,
+    },
+    {
+        losses: 2,
+        matches: 4,
+        wins: 2,
+    },
+    {
+        losses: 2,
+        matches: 2,
+        wins: 0,
+    },
+    {
+        losses: 2,
+        matches: 2,
+        wins: 0,
+    }
     ]);
 });
 
@@ -153,6 +153,26 @@ Deno.test("eight players", async () => {
     assertEquals(players.filter(p => p.losses.length < 2), [players[1]]);
 });
 
+Deno.test("Eight players #2", async () => {
+
+    const players: Player[] = new Array(8).fill(0)
+        .map((v, index) => ({ name: (index + 1).toString(), wins: [], losses: [], rest: 0 }));
+
+    async function chooseWinner(p1: Player, p2: Player): Promise<Player> {
+        const winner = p1.name < p2.name ? p1 : p2;
+        return winner;
+    }
+
+    let results: MatchResult[] = [];
+    let result: MatchResult;
+    do {
+        result = await play(players, chooseWinner as (p1: Player, p2: Player) => Promise<Player>);
+        results.push(result);
+        console.log(result.players?.[0].name, 'vs', result.players?.[1].name, '=>', result.winner?.name);
+    } while (!result.finished);
+
+    assertEquals(results.map(r => r.winner?.name), ['1', '3', '5', "7", "1", "5", "2", "6", "1", "3", "2", "3", "2", "1", "1"]);
+});
 
 Deno.test("five players, losers should meet other loser and winner should meet other winners firstly", async () => {
 
@@ -165,14 +185,48 @@ Deno.test("five players, losers should meet other loser and winner should meet o
     ];
 
     const settledMatches: { winner: Player, loser: Player }[] = [];
-    settledMatches.push({ winner: players[1], loser: players[0] });
-    settledMatches.push({ winner: players[3], loser: players[2] });
-    settledMatches.push({ winner: players[1], loser: players[4] });
-    settledMatches.push({ winner: players[0], loser: players[2] });
-    settledMatches.push({ winner: players[0], loser: players[4] });
-    settledMatches.push({ winner: players[1], loser: players[3] });
-    settledMatches.push({ winner: players[0], loser: players[3] });
-    settledMatches.push({ winner: players[1], loser: players[0] });
+
+    const settledMatchNames = [
+        {
+            "winner": "Cronblad",
+            "loser": "Alexander"
+        },
+        {
+            "winner": "Kent",
+            "loser": "Jonna"
+        },
+        {
+            "winner": "Cronblad",
+            "loser": "Viktoria"
+        },
+        {
+            "winner": "Cronblad",
+            "loser": "Kent"
+        },
+        {
+            "winner": "Alexander",
+            "loser": "Jonna"
+        },
+        {
+            "winner": "Kent",
+            "loser": "Viktoria"
+        },
+        {
+            "winner": "Alexander",
+            "loser": "Kent"
+        },
+        {
+            "winner": "Cronblad",
+            "loser": "Alexander"
+        }
+    ]
+
+    for (const settledMatchName of settledMatchNames) {
+        const winner = players.find(p => settledMatchName.winner === p.name)!;
+        const loser = players.find(p => settledMatchName.loser === p.name)!;
+        if (!winner || !loser) throw new Error();
+        settledMatches.push({ winner, loser });
+    }
 
     let wi = 0;
     async function chooseWinner(p1: Player, p2: Player): Promise<Player | undefined> {
@@ -186,25 +240,24 @@ Deno.test("five players, losers should meet other loser and winner should meet o
     for (let i = 0; i < 5; i++) {
         result = await play(players, chooseWinner);
         results.push(result);
-        // console.log(result.players?.[0].name, 'vs', result.players?.[1].name, '=>', result.winner?.name);
+        console.log(result.players?.[0].name, 'vs', result.players?.[1].name, '=>', result.winner?.name);
     }
-    
-    // Jonna should meet Alex, both from loser group and not Kent from winner group
+
+    assertEquals(result!.players![0].name, players[0].name);
+    assertEquals(result!.players![1].name, players[2].name);
+
+    result = await play(players, chooseWinner);
+
     assertEquals(result!.players![0].name, players[4].name);
-    assertEquals(result!.players![1].name, players[0].name);
-    
+    assertEquals(result!.players![1].name, players[3].name);
+
     result = await play(players, chooseWinner);
-    // Kent should meet Cronblad from winner group 
-    assertEquals(result!.players![0].name, players[3].name);
-    assertEquals(result!.players![1].name, players[1].name);
-    
+
+    assertEquals(result!.players![0].name, players[0].name);
+    assertEquals(result!.players![1].name, players[3].name);
+
     result = await play(players, chooseWinner);
-    // Kent Alex
-    assertEquals(result!.players![0].name, players[3].name);
-    assertEquals(result!.players![1].name, players[0].name);
-    
-    result = await play(players, chooseWinner);
-    // Cronblad Alex
+
     assertEquals(result!.players![0].name, players[1].name);
     assertEquals(result!.players![1].name, players[0].name);
     assertEquals(result!.winner?.name, players[1].name);
@@ -216,44 +269,44 @@ Deno.test("five players, losers should meet other loser and winner should meet o
 Deno.test("loser group should finish first", async () => {
     // scenario where Kent is undefeated but is meeting from loser group which is not finished
 
-    const competition: Competition = 
-        {
-          "id": "1",
-          "created": "2023-07-14T09:34:22.912Z",
-          "playerNames": [
+    const competition: Competition =
+    {
+        "id": "1",
+        "created": "2023-07-14T09:34:22.912Z",
+        "playerNames": [
             "Alex",
             "Cronblad",
             "Viktoria",
             "Kent Andersson",
             "Jonna"
-          ],
-          "settledMatchNames": [
+        ],
+        "settledMatchNames": [
             {
-              "winner": "Cronblad",
-              "loser": "Alex"
+                "winner": "Cronblad",
+                "loser": "Alex"
             },
             {
-              "winner": "Kent Andersson",
-              "loser": "Viktoria"
+                "winner": "Kent Andersson",
+                "loser": "Viktoria"
             },
             {
-              "winner": "Cronblad",
-              "loser": "Jonna"
+                "winner": "Cronblad",
+                "loser": "Jonna"
             },
             {
-              "winner": "Alex",
-              "loser": "Viktoria"
+                "winner": "Alex",
+                "loser": "Viktoria"
             },
             {
-              "winner": "Kent Andersson",
-              "loser": "Cronblad"
+                "winner": "Kent Andersson",
+                "loser": "Cronblad"
             },
             {
-              "winner": "Alex",
-              "loser": "Jonna"
+                "winner": "Alex",
+                "loser": "Jonna"
             }
-          ]
-        };
+        ]
+    };
 
     const players = [...competition.playerNames].map(name => ({
         name: name,
